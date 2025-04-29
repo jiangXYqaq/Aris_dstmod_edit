@@ -58,7 +58,7 @@ configuration_options =
     },
     {
         name = "lightsword_damage",
-        label = "光剑威力等级",  -- 游戏内显示名称
+        label = "光之剑威力等级",  -- 游戏内显示名称test
         options = {
             {description = "小杯 (34)", data = 34},  -- 基础值1x
             {description = "中杯 (68/默认)", data = 68},  -- 基准配置
