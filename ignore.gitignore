@@ -1,0 +1,16 @@
+# 通用忽略项
+*.log
+*.tmp
+*.bak
+
+# Windows 系统文件
+Thumbs.db
+Desktop.ini
+
+# 开发环境文件
+/node_modules/
+/bin/
+/.idea/
+
+# 项目特定忽略
+/config/secret.ini

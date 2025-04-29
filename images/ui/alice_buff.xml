@@ -1,9 +1,0 @@
-<Atlas>
-	<Texture filename="alice_buff.tex" />
-    <Elements>
-        <Element name="Buff_Damage.tex" u1="0" u2="0.25" v1="0.75" v2="1" />
-        <Element name="Buff_DEF.tex" u1="0.25" u2="0.5" v1="0.75" v2="1" />
-        <Element name="Buff_Mind.tex" u1="0.5" u2="0.75" v1="0.75" v2="1" />
-        <Element name="Buff_MoveSpeed.tex" u1="0" u2="0.25" v1="0.5" v2="0.75" />
-    </Elements>
-</Atlas>

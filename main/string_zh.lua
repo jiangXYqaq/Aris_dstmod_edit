@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 GLOBAL.setmetatable(env,{__index=function(t,k) return GLOBAL.rawget(GLOBAL,k) end})
 
 ---------- 人物相关 ----------
@@ -232,4 +233,240 @@ STRINGS.ALICE_MUSICBUFF = {
     SPEED = "随着音乐的节奏，我的步伐更加迅捷！",
     DEF = "这旋律让我坚如磐石，任何攻击都难以撼动我！",
     WORK = "这音乐让我精力充沛，工作效率提升了！",
+=======
+GLOBAL.setmetatable(env,{__index=function(t,k) return GLOBAL.rawget(GLOBAL,k) end})
+
+---------- 人物相关 ----------
+STRINGS.CHARACTER_TITLES.alice = "天童爱丽丝"
+STRINGS.CHARACTER_NAMES.alice = "机器人"
+STRINGS.CHARACTER_DESCRIPTIONS.alice = [[
+*是一个机器人
+*能轻松携带重物
+*有一个强大的光之剑
+]]
+STRINGS.CHARACTER_QUOTES.alice = "\"邦邦卡邦\""
+STRINGS.CHARACTER_SURVIVABILITY.alice = "严峻"
+
+STRINGS.CHARACTERS.ALICE = require "speech_alice"
+
+STRINGS.NAMES.ALICE = "Alice"
+STRINGS.SKIN_NAMES.alice_none = "Alice"
+
+---------- 专属物品 ----------
+STRINGS.NAMES.ALICE_LIGHTSWORD = "光之剑"
+STRINGS.RECIPE_DESC.ALICE_LIGHTSWORD = "重量及火力超乎凡响，对一般学生而言就连携带都很困难。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_LIGHTSWORD = "是的！爱丽丝做好冒险的准备了！" --爱丽丝台词
+STRINGS.CHARACTERS.WOLFGANG.DESCRIBE.ALICE_LIGHTSWORD = "这把剑看起来非常强大" --大力士台词
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_LIGHTSWORD = "这把剑看起来非常强大，但感觉对我来说太重了。" --其他人台词
+
+STRINGS.NAMES.ALICE_RING = "爱丽丝的光环"
+STRINGS.RECIPE_DESC.ALICE_RING = "能量源源不断，提供奇特的力量。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_RING = "勇者啊。愿光明与你同在。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_RING = "有一股神秘的能量从中涌出，真是不可思议。"
+
+STRINGS.NAMES.ALICE_BROOM = "女仆勇者扫帚"
+STRINGS.RECIPE_DESC.ALICE_BROOM = "……从哪里开始打扫呢？"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_BROOM = "爱丽丝，来扫除啦！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_BROOM = "这把扫把看起来相当实用，或许不仅仅是用来打扫的。"
+
+STRINGS.NAMES.ALICE_MODE1 = "连射模块"
+STRINGS.RECIPE_DESC.ALICE_MODE1 = "提升射速，让你化身连射机器。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_MODE1 = "火力全开，爱丽丝也能迅捷如风！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_MODE1 = "装备上它，我应该能更快攻击敌人。"
+
+STRINGS.NAMES.ALICE_MODE2 = "能量炮弹模块"
+STRINGS.RECIPE_DESC.ALICE_MODE2 = "充能后发射强大的能量炮弹。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_MODE2 = "能量蓄满，准备迎接冲击！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_MODE2 = "这看起来像是个强大的爆发武器。"
+
+STRINGS.NAMES.ALICE_MODE3 = "超新星模块"
+STRINGS.RECIPE_DESC.ALICE_MODE3 = "释放星爆般的强大力量。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_MODE3 = "以毫不动摇的意志，光啊！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_MODE3 = "听起来就像能释放毁灭性的力量，真期待它的表现。"
+
+STRINGS.NAMES.ALICE_MODE4 = "高能激光刀刃模块"
+STRINGS.RECIPE_DESC.ALICE_MODE4 = "将激光强化成近战利器。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_MODE4 = "这把激光刀刃会为爱丽丝扫清一切障碍！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_MODE4 = "光芒炽烈，我还是小心点别靠太近。"
+
+STRINGS.NAMES.WX78MODULE_ALC_MAGIC = "强化魔法"
+STRINGS.RECIPE_DESC.WX78MODULE_ALC_MAGIC = "赋予更强的魔法力量。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.WX78MODULE_ALC_MAGIC = "爱丽丝将用魔法的光辉点亮前路！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.WX78MODULE_ALC_MAGIC = "这会让我感觉更接近巫师的力量。"
+
+STRINGS.NAMES.WX78MODULE_ALC_BATTLE = "光之勇者"
+STRINGS.RECIPE_DESC.WX78MODULE_ALC_BATTLE = "分析战局，提升战斗能力。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.WX78MODULE_ALC_BATTLE = "全局分析完成，胜利已在掌握中！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.WX78MODULE_ALC_BATTLE = "这个模块会让我在战斗中更敏捷吧。"
+
+STRINGS.NAMES.WX78MODULE_ALC_CHARGE = "充能电路"
+STRINGS.RECIPE_DESC.WX78MODULE_ALC_CHARGE = "持续供电，让你充满活力。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.WX78MODULE_ALC_CHARGE = "能量满满，随时准备战斗！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.WX78MODULE_ALC_CHARGE = "我感觉自己能量满满！"
+
+STRINGS.NAMES.ALICE_REMOTE = "爱丽丝的手机"
+STRINGS.RECIPE_DESC.ALICE_REMOTE = "掌控全局的便携装置。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_REMOTE = "遥控开启，启动冒险！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_REMOTE = "这是个控制设备，但我不知道该怎么用。"
+
+STRINGS.NAMES.ALICE_BATTERY = "电池"
+STRINGS.RECIPE_DESC.ALICE_BATTERY = "储存能量的必备装备。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_BATTERY = "爱丽丝的能量来源，就靠这个啦！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_BATTERY = "虽然普通，但非常实用的东西。"
+
+STRINGS.NAMES.WOODEN_SHIELD = "木制防护板"
+STRINGS.RECIPE_DESC.WOODEN_SHIELD = "基础的防护装备，轻便易用。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.WOODEN_SHIELD = "朴素但可靠，爱丽丝准备好了！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.WOODEN_SHIELD = "这或许能提供最基本的保护。"
+
+STRINGS.NAMES.METAL_SHIELD = "金属防护板"
+STRINGS.RECIPE_DESC.METAL_SHIELD = "提供中等强度的防护。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.METAL_SHIELD = "金属的重量让我充满信心！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.METAL_SHIELD = "看起来比木制的坚固多了。"
+
+STRINGS.NAMES.DREAD_SHIELD = "复合型防护板"
+STRINGS.RECIPE_DESC.DREAD_SHIELD = "深邃的黑暗，令人感到不安。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.DREAD_SHIELD = "即使是绝望，也无法阻挡爱丽丝。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.DREAD_SHIELD = "这块盾牌让人毛骨悚然，但一定很坚固。"
+
+STRINGS.NAMES.COMPOSITE_SHIELD = "位面材料防护板"
+STRINGS.RECIPE_DESC.COMPOSITE_SHIELD = "融合多种材料的强力防护装备。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.COMPOSITE_SHIELD = "多重防护，给爱丽丝更大的安全感！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.COMPOSITE_SHIELD = "这设计很巧妙，看起来很可靠。"
+
+STRINGS.NAMES.THORN_SHIELD = "针刺防护板"
+STRINGS.RECIPE_DESC.THORN_SHIELD = "受到攻击时也会反击的防护装备。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.THORN_SHIELD = "攻击爱丽丝？准备好尝尝反击的滋味吧！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.THORN_SHIELD = "谁攻击我，这盾牌会让他们后悔。"
+
+STRINGS.NAMES.SHADOW_SHIELD = "暗影防护板"
+STRINGS.RECIPE_DESC.SHADOW_SHIELD = "暗影中的神秘防护，充满未知力量。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.SHADOW_SHIELD = "黑暗中也有希望，这正是它的意义。"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.SHADOW_SHIELD = "这盾牌好像会悄悄保护我。"
+
+STRINGS.NAMES.ALICE_BATTLECOAT = "冲锋外套"
+STRINGS.RECIPE_DESC.ALICE_BATTLECOAT = "保暖且适合战斗的实用外套。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_BATTLECOAT = "爱丽丝穿上它，感到无比舒适！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_BATTLECOAT = "这外套很适合冒险穿。"
+
+STRINGS.NAMES.ALICE_MAIDCOAT = "女仆勇者外套"
+STRINGS.RECIPE_DESC.ALICE_MAIDCOAT = "融合女仆风格与勇者精神的独特外套。"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_MAIDCOAT = "哼哼，爱丽丝也可以是战斗女仆！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_MAIDCOAT = "这外套兼具优雅与战斗力。"
+
+STRINGS.NAMES.ALICE_GLASSES = "墨镜"
+STRINGS.RECIPE_DESC.ALICE_GLASSES = "戴上它，你就是最酷的战士！"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_GLASSES = "这墨镜不仅炫酷，还能提升爱丽丝的战斗力！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_GLASSES = "这墨镜不仅炫酷，还能提升战斗力！"
+
+STRINGS.NAMES.ALICE_ROBOT = "扫地机器人"
+STRINGS.RECIPE_DESC.ALICE_ROBOT = "一个可爱的助手"
+STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_ROBOT = "这是爱丽丝的小助手，负责维护战场整洁！"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_ROBOT = "它看起来有点像爱丽丝，充满科技感。"
+
+STRINGS.ALICE_REMOTE = {
+    LIGHT = "照明",
+    MUSIC = "播放音乐",
+    TAUNT = "全息图像嘲讽",
+}
+
+---------- 机器人专属台词 ----------
+STRINGS.CHARACTERS.ALICE.ACTIONFAIL = {
+    COOLDOWN = "还得等一会儿呢，系统还在调整。",  -- 模块正在冷却，不能应用新模块
+
+    APPLYMODULE = {
+        NOTENOUGHSLOTS = "嗯，空间满了，看来没法加新东西了。", -- 模块槽位不够，无法应用新模块
+    },
+    CHARGE_FROM = {
+        CHARGE_FULL = "充电已经满啦，不需要更多了哦。",  -- 充电失败，因为电量已经满了
+        NOT_ENOUGH_CHARGE = "还差一点呢……爱丽丝不生气，只是有点失望。"  -- 充电失败，电量不足
+    },
+
+    REMOVEMODULES = {
+        NO_MODULES = "诶？好像没什么可以拿掉的。", -- 尝试移除模块时，检测到没有模块可以移除
+    },
+}
+
+STRINGS.CHARACTERS.ALICE.ANNOUNCE_CHARGE = "感觉好多了，完全恢复了呢！"  -- 系统已充满电，恢复正常
+STRINGS.CHARACTERS.ALICE.ANNOUNCE_DISCHARGE = "一切都很顺利哦，没什么问题。"  -- 系统放电正常，没有问题
+STRINGS.CHARACTERS.ALICE.ANNOUNCE_NOSLEEPHASPERMANENTLIGHT = "啊，太亮了，睡不着了……灯光跟爱丽丝的作息有点冲突。"  -- 照明机制阻止了角色进入睡眠状态
+STRINGS.CHARACTERS.ALICE.ANNOUNCE_WX_SCANNER_FOUND_NO_DATA = "这里好像没什么特别的东西可以记录。"  -- 扫描器检测到周围没有可获取的新数据
+STRINGS.CHARACTERS.ALICE.ANNOUNCE_WX_SCANNER_NEW_FOUND = "爱丽丝发现了有趣的东西"  -- 检测到可扫描生物
+
+---------- 碧蓝档案角色 ----------
+STRINGS.CHARACTERS.ALICE.DESCRIBE.YUZU = "柚子前辈！今天又在研究什么新游戏吗"
+
+STRINGS.CHARACTERS.ALICE.DESCRIBE.HINA = "日奈委员长！今天的风纪检查幸苦了"
+
+---------- 其他台词 ----------
+STRINGS.ACTIONS.GIVE.TRADE_LIGHTSWORD = "升级"
+STRINGS.ACTIONS.ALICE_LEVELUP = "升级"
+STRINGS.ACTIONS.ALICE_REMOTE_LEARN = "学习"
+STRINGS.ACTIONS.USESPELLBOOK.ALICEREMOTE = "使用"
+STRINGS.ACTIONS.CLOSESPELLBOOK.ALICEREMOTE = "停止"
+STRINGS.ACTIONS.CASTAOE.ALICE_LIGHTSWORD = "发射"
+
+STRINGS.ACTIONS.ALICE_TACKLE = 
+{
+    REMOVE = "解除",
+    GENERIC = "装备",
+}
+
+STRINGS.TOOMANYLIGHTSWORD = "爱丽丝带不下了"
+
+STRINGS.ACTIONS.LIGHTSWORD = {
+    NO_MODE_TOCHANGE = "没有可以更换的模块",
+    NO_MODE = "还没有装备电池",
+    NOFINITINESS = "电池耐久度不够了",
+    MODE_CHANGE = "光之剑模式切换至",
+    NO_ENABLE = "光之剑未装备电池",
+    CHARGECD = "超新星正在冷却",
+    NO_LIGHTSWORD = "没有发现光之剑，无法打开信息面板",
+    UI_TITLE = "光之剑 信息面板",
+    NEED_MODE = "需要模块才能升级",
+    MAX_LEVEL = "已经到最高等级了",
+}
+
+STRINGS.LIGHTSWORD_MODE = {
+    "连射模式",
+    "能量炮弹",
+    "EX技能",
+    "高能激光刀刃",
+}
+
+STRINGS.ALICEUI = {
+    VOICE = "音量",
+
+    WEAPON = {
+        ATK = "基础攻击力",
+        SPEED = "手持速度",
+        BATTERY = "电池电量",
+        KEY = "快捷键",
+        TEX1 = "基础\n能力",
+        TEX2 = "技能\n成长",
+        TEX3 = "武器\n成长",
+        STRING1 = "对1名敌人造成攻击力",
+        STRING2 = "飞行过程中对敌人造成攻击力",
+        STRING3 = "落地时造成攻击力",
+        STRING4 = "对直线范围内所有敌人造成攻击力",
+        STRING5 = "对触碰到激光的目标造成高频率",
+        STRING6 = "%的伤害",
+        STRING7 = "点伤害",
+        STRING8 = "%的范围伤害",
+    },
+
+    BUFF = {
+        DAMAGE = "BUFF效果：附近玩家获得10%的攻击提升",
+        SPEED = "BUFF效果：附近玩家获得25%的移动速度加成",
+        DEF = "BUFF效果：  附近玩家获得霸体效果，同时受到伤害量增加20%",
+        WORK = "BUFF效果：附近玩家的工作效率提升100%",
+    },
+}
+
+STRINGS.ALICE_MUSICBUFF = {
+    DAMAGE = "这旋律激发了我的战斗热情，攻击力得到了提升！",
+    SPEED = "随着音乐的节奏，我的步伐更加迅捷！",
+    DEF = "这旋律让我坚如磐石，任何攻击都难以撼动我！",
+    WORK = "这音乐让我精力充沛，工作效率提升了！",
+>>>>>>> 23121469d84d981b602c8a05fcc5a165255f6831
 }

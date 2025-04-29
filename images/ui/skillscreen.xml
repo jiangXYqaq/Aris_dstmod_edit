@@ -1,7 +1,0 @@
-<Atlas>
-	<Texture filename="skillscreen.tex" />
-    <Elements>
-        <Element name="skillback.tex" u1="0" u2="0.8193359" v1="0.5043945" v2="1" />
-        <Element name="levelup.tex" u1="0" u2="0.2426758" v1="0.4365234" v2="0.5043945" />
-    </Elements>
-</Atlas>
