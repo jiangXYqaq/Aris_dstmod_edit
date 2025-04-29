@@ -260,6 +260,10 @@ local function fn()
         return inst
     end
 	
+	inst:AddComponent("alice_critical")
+    inst.components.alice_critical:Setchance(TUNING.ALICE_SWORD_CHANCE)
+    inst.components.alice_critical:Setvalue(TUNING.ALICE_SWORD_VALUE)
+	
     inst:AddComponent("inspectable")
 
     inst:AddComponent("aoespell")
