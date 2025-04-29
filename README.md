@@ -18,9 +18,9 @@ DST mod Tendou Aris（Blue Archive）edit
 - 武器弹匣容量扩容
 - 特定技能解锁难度降低
 - EX技能快捷键设置
+- 攻击力配置选项扩展
 
 ### 开发计划
-- 攻击力配置选项扩展
 - 专属装备快速收割效果
 - 随从物品栏永久保鲜
 - 武器攻击手感优化
@@ -43,9 +43,9 @@ DST mod Tendou Aris（Blue Archive）edit
 - Weapon magazine capacity expansion
 - Specific skill unlock requirements simplified
 - EX skill hotkey configuration
+- Attack power customization options
 
 ### Planned Features
-- Attack power customization options
 - Exclusive gear quick harvest effect
 - Permanent freshness for minion inventory
 - Weapon handling optimization
