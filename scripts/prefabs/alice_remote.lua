@@ -520,9 +520,9 @@ local function FueledTask(inst)
 		return
 	end
 	local fuelamount = 
-        (inst.playing_sound and 0.1 or 0) + 
-        (inst.light_active and 0.1 or 0) + 
-        ((inst.robot and inst.robot._taunttask) and 0.1 or 0)
+        (inst.playing_sound and 0.001 or 0) + 
+        (inst.light_active and 0.01 or 0) + 
+        ((inst.robot and inst.robot._taunttask) and 0.01 or 0)
 
 	inst.components.fueled:DoDelta(-fuelamount)
 end

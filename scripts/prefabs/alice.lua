@@ -599,8 +599,13 @@ local function GetCritical(inst)
             equip = equip + v2
         end
     end
+    --新增溢出暴击率转暴击伤害
+	local total_crit_chance = base + buff + equip
+	local overflow = math.max(total_crit_chance - 1, 0)
+	local crit_chance = math.min(total_crit_chance, 1)
+	damage = damage + overflow * 3
     --print("暴击概率：", base + buff + equip, "暴击数值：", damage)
-    return base + buff + equip, damage
+    return crit_chance, damage
 end
 
 local function customdamagemult(inst, target, weapon, multiplier, mount)
@@ -723,7 +728,7 @@ local function OnTimerFinished(inst, data)
         do_steam_fx(inst)
     end
 end
---NEED TO FILL THIS
+--[[ --NEED TO FILL THIS
 local GIFT_TABLE= {
     GIFT_SPECIAL = {
         {prefabs = {{"item",1},{"item2",2}}, weight = 4},
@@ -804,7 +809,7 @@ local function OnNewDay(inst)
     inst:DoTaskInTime(0.5, function() 
         GiveDailyGift(inst) 
     end)
-end
+end ]]
 
 ----------------主机函数----------------
 local function master_postinit(inst)
@@ -930,7 +935,8 @@ local function master_postinit(inst)
     inst:ListenForEvent("attacked", AttackOrAttacked)
     inst:ListenForEvent("lightswordshot", AttackOrAttacked)
 
-    inst:WatchWorldState("cycles", OnNewDay)
+    --for_daily_gift
+    --inst:WatchWorldState("cycles", OnNewDay)
 
     inst.components.playerlightningtarget:SetHitChance(TUNING.WX78_LIGHTNING_TARGET_CHANCE)
     inst.components.playerlightningtarget:SetOnStrikeFn(OnLightningStrike)
