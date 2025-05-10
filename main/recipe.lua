@@ -59,7 +59,7 @@ AddCharacterRecipe("alice_battlecoat",
 --- 女仆装
 AddCharacterRecipe("alice_maidcoat",
     {
-        Ingredient("voidcloth", 1),
+        Ingredient("dreadstonehat", 1),
         Ingredient("sweatervest", 1),
         Ingredient("manrabbit_tail", 3),
     },
@@ -115,7 +115,7 @@ AddCharacterRecipe("alice_mode3",
 -- 高能激光刀刃模块
 AddCharacterRecipe("alice_mode4",
     {
-        Ingredient("security_pulse_cage", 1),
+        Ingredient("alterguardianhatshard", 1),
         Ingredient("gears", 1),
         Ingredient("transistor", 4),
     },
@@ -284,7 +284,7 @@ AddCharacterRecipe("alice_glasses",
         Ingredient("moonglass", 6),
         Ingredient("nightmarefuel", 6),
         Ingredient("twigs", 4),
-        Ingredient("glommerfuel", 1),
+        Ingredient("glommerfuel", 2),
     },
     TECH.NONE,
     {
