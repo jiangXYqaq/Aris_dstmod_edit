@@ -8,7 +8,8 @@ description = [[
 ]]
 
 author = "Arisu"
-version = "1.024"
+--base v1.024
+version = "1.2.5"
 
 forumthread = ""
 
