@@ -188,8 +188,8 @@ AddClassPostConstruct("widgets/controls", function(self)
     end
 end)
 
---broom map telep
-AddModRPCHandler("alice_mod", "TeleportTo", function(player, x, y, z)
+--alice_broom map telep
+AddModRPCHandler("alice", "TeleportTo", function(player, x, y, z)
     if player:HasTag("alice") and TheWorld.Map:IsExplored(x, z) then
         player.Transform:SetPosition(x, 0, z)
     end
