@@ -11,9 +11,11 @@ local prefabs =
     "crab_king_waterspout",
 }
 
+--需要使炮弹命中后能破坏巨大作物（锤子工作）
+--需要排除目标 小虚影 阿比盖尔
 local Utils = require("alice_utils/utils")
 local PROJECTILE_MUST_ONE_OF_TAGS = { "_combat", "_health", "blocker" }
-local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player" }
+local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player", "abigail" }
 
 local ONHIT_MUST_ONE_OF_TAGS = { "oceanfishable", "kelp", "_inventoryitem", "wave", "_workable" }
 
@@ -151,7 +153,7 @@ local function OnHit(inst, attacker, target)
             end
             affected_entity:Remove()
         -- 击飞可拾取物品
-        elseif affected_entity.components.inventoryitem ~= nil then
+        elseif affected_entity.components.inventoryitem ~= nil and not affected_entity.components.workable then--尝试使巨大作物可破坏
             launch_away(affected_entity, position)
         elseif affected_entity.waveactive then
             affected_entity:DoSplash()
@@ -451,7 +453,7 @@ return
         commonfn = commonfn,
         maxhits = math.huge,
         speed = 200,
-        width = 3,
+        width = 5,
         range = 58,
         sound = "alicesound/alicesound/alice_chargeshot",
     }),
