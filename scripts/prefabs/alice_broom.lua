@@ -14,7 +14,109 @@ local assets =
 
 local UpvalueHacker = require("alice_utils/upvaluehacker")
 
+local function TeleportToPosition(inst, owner, position)
+    -- Teleportation logic is implemented and works if called directly.
+    -- Ensure the position is valid before teleporting.
+    if owner and owner:IsValid() and position then
+-- 防止传送到非法位置
+-- 防止传送到非法位置
+        if TheWorld.Map:IsPassableAtPoint(position.x, 0, position.z) then
+            owner.Transform:SetPosition(position.x, 0, position.z)
+            print("[Success] Teleported to:", position.x, position.z)
+        else
+            print("[Error] Teleport position blocked")
+        end
+    else
+        print("[Error] Invalid parameters for teleportation")
+    end
+end
+
+local function EnableMapTeleport(inst, owner)
+    -- Progress: Hooking into the map screen to enable teleportation.
+    -- Current Issue: Clicking on the map does not trigger teleportation logic.
+
+    -- Ensure this logic only runs on the client.
+    if not TheWorld.ismastersim then
+        return
+    end
+
+    -- Validate the owner and ensure it is the player.
+    owner = owner or (inst.components.inventoryitem and inst.components.inventoryitem:GetGrandOwner())
+    if not o or not owner.IsValid or not owner:IsValid() then
+        return
+    end
+
+    -- 严格检查实体有效性
+    if not owner or not owner.IsValidwner or not owner.IsValid or not owner:IsValid() then
+        return
+    end
+
+    -- 严格检查实体有效性
+    if not owner or not owner.IsValid or not owner:IsValid() then
+        print("[Error] EnableMapTeleport: Invalid owner", owner)
+        return
+    end
+
+    local function HookMapScreen()
+        -- Progress: Hooking into the MapScreen's OnClick function.
+        -- Current Issue: The OnClick function is not being triggered.
+
+        if owner.HUD and owner.HUD.controls and owner.HUD.controls.MapScreen then
+            local MapScreen = owner.HUD.controls.MapScreen
+-- 在 HookMapScreen 中添加渲染提示
+            if not MapScreen._alice_renderHook then
+                MapScreen._alice_renderHook = true
+                local oldRender = MapScreen.Render
+                MapScreen.Render = function(self, ...)
+                    oldRender(self, ...)
+                    if self.inst:IsValid() and owner:HasTag("player") then
+                        -- 在屏幕显示提示文字
+                        local text = "点击传送"
+                        local w, h = TheSim:GetScreenSize()
+                        TheFrontEnd:GetText():DrawString(6, h - 60, text, 255, 255, 255, 255, true)
+                    end
+                end
+            end
+
+            -- 保存原版点击方法并重写
+            if not MapScreen._alice_originalOnClick then
+                MapScreen._alice_originalOnClick = MapScreen.OnClick
+                MapScreen.OnClick = function(self, x, y, ...)
+                    -- 调用原版方法以保持兼容性
+                    MapScreen._alice_originalOnClick(self, x, y, ...)
+
+                    -- 检查是否手持扫把
+                    local active_item = owner.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if active_item and active_item.prefab == "alice_broom" then
+                        local pos = TheWorld.Map:GetTileCenterPoint(x, 0, y)
+                        if pos and TheWorld.Map:IsPassableAtPoint(pos.x, 0, pos.z) then
+                            TeleportToPosition(inst, owner, pos)
+                                                end
+                    end
+                end
+                print("[Debug] MapScreen.OnClick hooked successfully")
+            end
+            return true
+        end
+        return false
+    end
+
+    -- Retry hooking into the MapScreen until it is available.
+    local retry_count = 0
+    inst:DoPeriodicTask(0.1, function()
+        if HookMapScreen() then
+            return true --  返回 true 终止任务
+        end
+        retry_count = retry_count + 1
+        if retry_count >= 10 then
+                        return true --  达到最大重试次数后终止
+        end
+    end)
+end
+
 local function onequip(inst, owner)
+    -- Progress: Map teleport logic is triggered when the broom is equipped.
+    -- Ensure the owner is valid and pass it to EnableMapTeleport.
     owner.AnimState:OverrideSymbol("swap_object", "alice_broom", "symbol0")
     owner.AnimState:Show("ARM_carry")
     owner.AnimState:Hide("ARM_normal")
@@ -28,9 +130,12 @@ local function onequip(inst, owner)
     if not inst._had_fastpicker then
         owner:AddTag("fastpicker")
     end
+
+    EnableMapTeleport(inst, owner) -- 传递正确的 owner
 end
 
 local function onunequip(inst, owner)
+    -- Progress: Unhooking the MapScreen's OnClick function when the broom is unequipped.
     owner.AnimState:Hide("ARM_carry")
     owner.AnimState:Show("ARM_normal")
 
@@ -41,6 +146,14 @@ local function onunequip(inst, owner)
     end
     if not inst._had_fastpicker then
         owner:RemoveTag("fastpicker")
+    end
+
+    if owner.HUD and owner.HUD.controls.MapScreen then
+        local MapScreen = owner.HUD.controls.MapScreen
+        if MapScreen._alice_originalOnClick then
+            MapScreen.OnClick = MapScreen._alice_originalOnClick
+            MapScreen._alice_originalOnClick = nil
+        end
     end
 end
 
@@ -400,6 +513,14 @@ local function tool_fn()
 
     inst:AddComponent("fuel")
     inst.components.fuel.fuelvalue = TUNING.MED_FUEL
+
+    -- 在装备扫把时的回调中调用 EnableMapTeleport
+    inst:ListenForEvent("equipped", function(inst, data)
+        local real_owner = data and data.owner -- 从 event data 中获取 owner
+        if real_owner then
+            EnableMapTeleport(inst, real_owner)
+        end
+    end)
 
     MakeHauntableLaunchAndIgnite(inst)
 

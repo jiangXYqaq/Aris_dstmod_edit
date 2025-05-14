@@ -430,3 +430,67 @@ AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "
 AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "doshortaction"))
 AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
 AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
+
+-------------------------------------------------------
+--------------------  扫帚地图传送  --------------------
+-------------------------------------------------------
+
+-- 定义传送动作
+local teleport_action = Action({ priority = 10 })
+teleport_action.id = "ALICE_BROOM_TELEPORT"
+teleport_action.str = "Teleport"
+teleport_action.fn = function(act)
+    if act.doer and act.pos then
+        act.doer.Transform:SetPosition(act.pos.x, 0, act.pos.z)
+        print("[Debug] TeleportAction: Teleported to", act.pos.x, act.pos.z)
+        return true
+    end
+    return false
+end
+
+-- 注册传送动作
+AddAction(teleport_action)
+
+-- 添加动作状态处理
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_TELEPORT, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_TELEPORT, "doshortaction"))
+
+-- 地图点击传送逻辑
+local function EnableMapTeleport(inst, owner)
+    if owner and owner.HUD and owner.HUD.controls and owner.HUD.controls.MapScreen then
+        local MapScreen = owner.HUD.controls.MapScreen
+        if not MapScreen._originalOnClick then
+            MapScreen._originalOnClick = MapScreen.OnClick
+        end
+
+        MapScreen.OnClick = function(self, x, y)
+            local position = TheWorld.Map:GetTileCenterPoint(x, 0, y)
+            if position and TheWorld.Map:IsPassableAtPoint(position.x, 0, position.z) then
+                local act = BufferedAction(owner, nil, ACTIONS.ALICE_BROOM_TELEPORT, nil, position)
+                owner.components.locomotor:PushAction(act, true)
+            else
+                print("[Debug] MapTeleport: Invalid position or not passable.")
+            end
+        end
+    end
+end
+
+local function DisableMapTeleport(inst, owner)
+    if owner and owner.HUD and owner.HUD.controls and owner.HUD.controls.MapScreen then
+        local MapScreen = owner.HUD.controls.MapScreen
+        if MapScreen._originalOnClick then
+            MapScreen.OnClick = MapScreen._originalOnClick
+            MapScreen._originalOnClick = nil
+        end
+    end
+end
+
+-- 在扫帚装备和卸下时启用/禁用地图传送
+local function CheckBroomTeleport(inst, doer, pos, actions, right)
+    if doer.replica.inventory and doer.replica.inventory:EquipHasTag("alice_broom") then
+        table.insert(actions, ACTIONS.ALICE_BROOM_TELEPORT)
+    end
+end
+
+-- 注册到 POINT 类型检测
+table.insert(TUNING.POINTFNS_CUSTOM, CheckBroomTeleport)
