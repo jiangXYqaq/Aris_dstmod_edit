@@ -307,3 +307,106 @@ table.insert(TUNING.POINTFNS_CUSTOM, check_remote_action)
 AddAction(remote_action)
 AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_REMOTE, "alice_remote"))
 AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_REMOTE, "alice_remote"))
+
+-------------------------------------------------------
+--------------------  扫帚拾取功能  --------------------
+-------------------------------------------------------
+-- 换肤动作（覆盖原版RESKIN）
+local reskin_action = Action({ priority = 5 })
+reskin_action.id = "ALICE_BROOM_RESKIN"
+reskin_action.str = STRINGS.ACTIONS.RESKIN -- 使用原版文本
+
+reskin_action.fn = function(act)
+    if act.target == nil then
+        print("[Debug] ReskinAction: Target is nil. Doer:", act.doer.prefab)
+        return false
+    end
+
+    local tool = act.doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        print("[Debug] ReskinAction: Attempting to reskin target:", act.target.prefab)
+        return ReskinTarget(tool, act.doer, act.target)
+    end
+
+    print("[Debug] ReskinAction: No valid tool or target")
+    return false
+end
+
+-- 换肤动作检测
+local function CheckReskinAction(inst, doer, target, actions)
+    if target == nil then
+        print("[Debug] CheckReskinAction: Target is nil")
+        return
+    end
+
+    local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        if safe_can_cast(doer, target, nil) then
+            print("[Debug] CheckReskinAction: Adding reskin action for target:", target.prefab)
+            table.insert(actions, ACTIONS.ALICE_BROOM_RESKIN)
+        else
+            print("[Debug] CheckReskinAction: Target not valid for reskin:", target.prefab)
+        end
+    else
+        print("[Debug] CheckReskinAction: No valid tool equipped")
+    end
+end
+
+-- 拾取动作（独立注册）
+local pickup_action = Action({ priority = 6 }) -- 优先级低于换肤
+pickup_action.id = "ALICE_BROOM_PICKUP"
+pickup_action.str = STRINGS.ACTIONS.ALICE_PICKUP -- 确保已定义
+
+pickup_action.fn = function(act)
+    if act.target == nil then
+        print("[Debug] PickupAction: Target is nil. Doer:", act.doer.prefab)
+        return false
+    end
+
+    local tool = act.doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        print("[Debug] PickupAction: Attempting to pick up target:", act.target.prefab)
+        return PickUpItems(tool, act.doer, act.target)
+    end
+
+    print("[Debug] PickupAction: No valid tool or target")
+    return false
+end
+
+-- 拾取动作检测
+local function CheckPickupAction(inst, doer, target, actions)
+    if target == nil then
+        print("[Debug] CheckPickupAction: Target is nil")
+        return
+    end
+
+    local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        local inventoryitem = target.components.inventoryitem
+        if inventoryitem 
+            and inventoryitem.canbepickedup 
+            and not target:HasOneOfTags({"heavy", "irreplaceable", "FX"})
+        then
+            print("[Debug] CheckPickupAction: Adding pickup action for target:", target.prefab)
+            table.insert(actions, ACTIONS.ALICE_BROOM_PICKUP)
+        else
+            print("[Debug] CheckPickupAction: Target not valid for pickup:", target.prefab)
+        end
+    else
+        print("[Debug] CheckPickupAction: No valid tool equipped")
+    end
+end
+
+-- 注册到POINT类型检测（在现有注册代码后添加）
+table.insert(TUNING.POINTFNS_CUSTOM, CheckBroomPickupAction)
+AddAction(reskin_action)
+AddAction(pickup_action)
+-- 注册到组件检测
+AddComponentAction("USEITEM", "inventoryitem", CheckReskinAction)
+AddComponentAction("USEITEM", "inventoryitem", CheckPickupAction)
+
+-- 添加动作状态处理（在文件底部添加）
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "doshortaction"))
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
