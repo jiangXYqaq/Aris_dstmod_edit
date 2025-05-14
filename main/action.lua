@@ -23,6 +23,7 @@ AddComponentAction("POINT", "inventoryitem", function(inst, doer, pos, actions, 
         fn(inst, doer, pos, actions, right, target)
     end
 end)
+
 -------------------------------------------------------
 --------------------  快捷装备物品  --------------------
 -------------------------------------------------------
@@ -318,7 +319,13 @@ reskin_action.str = STRINGS.ACTIONS.RESKIN -- 使用原版文本
 
 reskin_action.fn = function(act)
     if act.target == nil then
-        print("[Debug] ReskinAction: Target is nil. Doer:", act.doer.prefab)
+        print("[Debug] ReskinAction: Target is nil. Doer:", act.doer and act.doer.prefab or "nil")
+        return false
+    end
+
+    -- 修复：添加安全检查，确保 doer 是玩家实体
+    if not act.doer or not act.doer.components or not act.doer.components.inventory then
+        print("[Debug] ReskinAction: Invalid doer. Doer:", act.doer and act.doer.prefab or "nil")
         return false
     end
 
@@ -363,6 +370,12 @@ pickup_action.fn = function(act)
         return false
     end
 
+	-- 修复：添加安全检查，确保 doer 是玩家实体
+    if not act.doer or not act.doer.components or not act.doer.components.inventory then
+        print("[Debug] ReskinAction: Invalid doer. Doer:", act.doer and act.doer.prefab or "nil")
+        return false
+    end
+
     local tool = act.doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
     if tool and tool.prefab == "alice_broom" then
         print("[Debug] PickupAction: Attempting to pick up target:", act.target.prefab)
@@ -380,6 +393,13 @@ local function CheckPickupAction(inst, doer, target, actions)
         return
     end
 
+	-- 修复：添加安全检查，确保 doer 是玩家实体
+    if not doer or not doer.components or not doer.components.inventory then
+        print("[Debug] ReskinAction: Invalid doer. Doer:", doer and doer.prefab or "nil")
+        return false
+    end
+
+	--qu
     local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
     if tool and tool.prefab == "alice_broom" then
         local inventoryitem = target.components.inventoryitem

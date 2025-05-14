@@ -83,36 +83,43 @@ if TUNING.ALICE_BROOM_PICKUP_RADIUS == nil then
     print("[Debug] TUNING.ALICE_BROOM_PICKUP_RADIUS was nil. Set to default value: 5")
 end
 
--- 拾取功能（重构后）
+-- 拾取功能（修复后）
 local function PickUpItems(inst, doer, target)
     if target == nil or not target:IsValid() then
-        print("[Debug] PickUpItems: Invalid target")
+        return false
+    end
+
+    -- 确保 doer 是玩家实体并具有 inventory 组件
+    if not doer.components.inventory then
+        print("[Debug] PickUpItems: Doer is not a valid player entity.")
+        return false
+    end
+
+    -- 确保目标具有 inventoryitem 组件
+    if not target.components.inventoryitem then
+        print("[Debug] PickUpItems: Target does not have an inventoryitem component. Target:", target.prefab)
         return false
     end
 
     local x, y, z = target.Transform:GetWorldPosition()
     if x == nil or y == nil or z == nil then
-        print("[Debug] PickUpItems: Invalid target position")
         return false
     end
 
     -- 确保搜索半径有效
     local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS
     if type(radius) ~= "number" or radius <= 0 then
-        print("[Debug] PickUpItems: Invalid pickup radius. Using default value: 5")
         radius = 5
     end
 
     -- 排除不可拾取物品
     local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
-        print("[Debug] PickUpItems: Target excluded by tags:", target.prefab)
         return false
     end
 
     -- 检查玩家是否有 inventory 组件
     if not doer.components.inventory then
-        print("[Debug] PickUpItems: Doer has no inventory component. Cannot pick up items.")
         return false
     end
 
@@ -123,6 +130,7 @@ local function PickUpItems(inst, doer, target)
     -- 计算总堆叠数量
     local total_stack_size = 0
     local max_stack_size = 400
+    local dropped_items = {} -- 用于存储未能拾取的物品
     for _, item in ipairs(items) do
         if item.prefab == target_prefab 
             and item.components.inventoryitem 
@@ -136,33 +144,136 @@ local function PickUpItems(inst, doer, target)
 
             -- 检查是否会超过上限
             if total_stack_size + stack_size > max_stack_size then
-                print("[Debug] PickUpItems: Reached stack size limit. Stopping collection.")
                 break
             end
 
             total_stack_size = total_stack_size + stack_size
-            print("[Debug] PickUpItems: Found item:", item.prefab, "with stack size:", stack_size)
             item:Remove() -- 移除地面上的物品
         end
     end
 
     if total_stack_size > 0 then
-        print("[Debug] PickUpItems: Total stack size to pick up:", total_stack_size)
         -- 使用 for 循环逐个生成物品并添加到玩家物品栏
         for i = 1, total_stack_size do
             local new_item = SpawnPrefab(target_prefab)
-            if doer.components.inventory:GiveItem(new_item) then
-                print("[Debug] PickUpItems: Successfully added item to inventory:", target_prefab, "Item:", i)
-            else
-                print("[Debug] PickUpItems: Failed to add item to inventory. Dropping item at player's position.")
-                new_item.Transform:SetPosition(doer.Transform:GetWorldPosition())
+            if not doer.components.inventory:GiveItem(new_item) then
+                -- 背包满时将物品存储到 dropped_items 表中
+                table.insert(dropped_items, new_item)
             end
         end
-    else
-        print("[Debug] PickUpItems: No valid items found to pick up.")
+    end
+
+    -- 将未能拾取的物品掉落在玩家附近
+    if #dropped_items > 0 then
+        for _, item in ipairs(dropped_items) do
+            local px, py, pz = doer.Transform:GetWorldPosition()
+            item.Transform:SetPosition(px + math.random() * 2 - 1, py, pz + math.random() * 2 - 1)
+        end
     end
 
     return true
+end
+
+-- 收获功能（修复后）
+local function HarvestItems(inst, doer, target)
+    if target == nil or not target:IsValid() then
+        print("[Debug] HarvestItems: Invalid target")
+        return false
+    end
+
+    -- 确保目标具有 pickable 组件
+    if not target.components.pickable then
+        print("[Debug] HarvestItems: Target does not have a pickable component. Target:", target.prefab)
+        return false
+    end
+
+    local x, y, z = target.Transform:GetWorldPosition()
+    if x == nil or y == nil or z == nil then
+        print("[Debug] HarvestItems: Invalid target position")
+        return false
+    end
+
+    -- 确保搜索半径有效
+    local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS or 15
+    local max_harvest_count = 40
+    local harvested_count = 0
+
+    -- 查找蜂箱，范围为 2 倍 radius
+    local beeboxes = TheSim:FindEntities(x, y, z, radius * 2, nil, nil, {"beebox"})
+    local has_beebox_nearby = #beeboxes > 0
+
+    -- 特殊处理：收获地面上的花瓣（不包括恶魔花），但附近有蜂箱时跳过
+--entities = TheSim:FindEntities(x, y, z, radius, must_have_tags, cant_have_tags, must_have_one_of_tags)
+    local flowers = TheSim:FindEntities(x, y, z, radius, {"flower", "cattoy"}, {"INLIMBO", "FX", "NOCLICK"}) -- 只匹配prefab为"flower"的实体
+    print(string.format(
+        "[Debug] HarvestParams | PlayerPos: (%.2f, %.2f, %.2f) | Beeboxes: %d | Flowers: %d",
+        x, y, z, #beeboxes, #flowers
+    ))
+
+    for _, flower in ipairs(flowers) do
+        if harvested_count >= max_harvest_count then
+            print("[Debug] HarvestItems: Reached harvest limit. Stopping flower collection.")
+            break
+        end
+
+        -- 优化判断顺序：先验证有效性
+        if flower:IsValid() and flower.components.pickable then
+            -- 蜂箱存在时跳过所有普通花
+            if not has_beebox_nearby then
+                -- 执行收获
+                if flower.components.pickable:CanBePicked() then
+                    flower.components.pickable:Pick(doer)
+                    local loot = SpawnPrefab(flower.components.pickable.product)
+                    if loot and not doer.components.inventory:GiveItem(loot) then
+                        -- 修复：背包满时将物品掉落在玩家位置
+                        loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+                    end
+                    harvested_count = harvested_count + 1
+                    print("[Debug] Harvested flower:", flower.prefab)
+                end
+            else
+                -- 添加玩家说话逻辑
+                if doer.components.talker then
+                    doer.components.talker:Say(STRINGS.ACTIONS.ALICE_BROOM_BEEKEEPING_WARNING)
+                end
+                print("[Debug] HarvestItems: Skipping flower (beebox nearby):", flower.prefab)
+            end
+        else
+            print("[Debug] HarvestItems: Invalid flower:", flower and flower.prefab or "nil")
+        end
+    end
+
+    -- 查找目标及其周围的可收获物品，排除所有花
+    local items = TheSim:FindEntities(x, y, z, radius, {"pickable"}, {"INLIMBO", "FX", "NOCLICK", "flower"}) -- 排除所有花
+    for _, item in ipairs(items) do
+        if harvested_count >= max_harvest_count then
+            print("[Debug] HarvestItems: Reached harvest limit. Stopping collection.")
+            break
+        end
+
+        if item.components.pickable and item.components.pickable:CanBePicked() then
+            print("[Debug] HarvestItems: Picking item:", item.prefab)
+            local product = item.components.pickable.product
+            local num = item.components.pickable.numtoharvest or 1
+
+            -- 收获物品
+            item.components.pickable:Pick(doer)
+            harvested_count = harvested_count + 1
+
+            -- 将产物放入玩家背包
+            for i = 1, num do
+                local loot = SpawnPrefab(product)
+                if loot and not doer.components.inventory:GiveItem(loot) then
+                    -- 修复：背包满时将物品掉落在玩家位置
+                    loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+                end
+            end
+        else
+            print("[Debug] HarvestItems: Item cannot be picked or is invalid:", item and item.prefab or "nil")
+        end
+    end
+
+    return harvested_count > 0
 end
 
 local function tool_fn()
@@ -180,6 +291,7 @@ local function tool_fn()
     inst.AnimState:PlayAnimation("dimian")
 
     inst:AddTag("nopunch")
+    inst:AddTag("bramble_resistant") -- 添加 bramble_resistant 标签到装备本身
 
     inst.spelltype = "RESKIN"
 
@@ -212,9 +324,7 @@ local function tool_fn()
     inst.components.spellcaster.veryquickcast = true
     inst.components.spellcaster.canusefrominventory  = true
 
-    --inst.components.spellcaster:SetSpellFn(function(inst, doer, target, pos)
     inst.components.spellcaster:SetSpellFn(function(inst, target, pos, doer)
-
         -- 确保参数正确传递
         if target == nil then
             print("[Debug] SpellFn: Target is nil. Doer:", doer.prefab, "Position:", pos and (pos.x .. ", " .. pos.y .. ", " .. pos.z) or "nil")
@@ -244,12 +354,18 @@ local function tool_fn()
             print("[Debug] SpellFn: Attempting reskin")
             spellCB(inst, target, pos, doer)
             return true
-        else
+        end
+
+        -- 检查是否可以收获
+        if target.components.pickable and target.components.pickable:CanBePicked() then
+            print("[Debug] SpellFn: Attempting harvest")
+            return HarvestItems(inst, doer, target)
+        end
+
+        -- 检查是否可以拾取
+        if target.components.inventoryitem and not target:IsInLimbo() then
             print("[Debug] SpellFn: Attempting pickup")
-            -- 检查是否可以拾取
-            if target.components.inventoryitem and not target:IsInLimbo() then
-                return PickUpItems(inst, doer, target)
-            end
+            return PickUpItems(inst, doer, target)
         end
     
         print("[Debug] SpellFn: No valid action for target:", target.prefab)
@@ -268,12 +384,18 @@ local function tool_fn()
             return false
         end
     
-        -- 检查是否可以换肤或拾取
+        -- 检查是否可以换肤
         local can_reskin = safe_can_cast(doer, target, pos)
+    
+        -- 检查是否可以拾取
         local can_pickup = target.components.inventoryitem and not target:HasTag("heavy")
     
-        print("[Debug] CanCastFn: can_reskin =", can_reskin, ", can_pickup =", can_pickup, ", target =", target.prefab or "unknown")
-        return can_reskin or can_pickup
+        -- 检查是否可以收获
+        local can_harvest = target.components.pickable and target.components.pickable:CanBePicked()
+    
+        print("[Debug] CanCastFn: can_reskin =", can_reskin, ", can_pickup =", can_pickup, ", can_harvest =", can_harvest, ", target =", target.prefab or "unknown")
+    
+        return can_reskin or can_pickup or can_harvest
     end)
 
     inst:AddComponent("fuel")

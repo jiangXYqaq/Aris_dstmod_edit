@@ -234,3 +234,5 @@ STRINGS.ALICE_MUSICBUFF = {
     DEF = "这旋律让我坚如磐石，任何攻击都难以撼动我！",
     WORK = "这音乐让我精力充沛，工作效率提升了！",
 }
+
+STRINGS.ACTIONS.ALICE_BROOM_BEEKEEPING_WARNING = "检测到蜂巢资源协议生效中，强制采集将触发生态保护条例第7.3条——请求终止。"
