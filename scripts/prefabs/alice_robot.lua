@@ -220,43 +220,6 @@ local function OnLoad(inst, data)
     end
 end
 
-local function AutoPickupItems(inst)
-    -- 基础参数配置
-    local pickup_radius = 6.0  -- 物品检测范围（可调整）
-    local check_interval = 0.5 -- 检测频率（秒）
-
-    -- 定期执行拾取逻辑
-    inst:DoPeriodicTask(check_interval, function()
-        if inst.components.container ~= nil and not inst.components.container:IsFull() then
-            -- 获取容器内已有物品的类型列表
-            local existing_items = {}
-            for i = 1, inst.components.container:GetNumSlots() do
-                local item = inst.components.container:GetItemInSlot(i)
-                if item ~= nil then
-                    existing_items[item.prefab] = true
-                end
-            end
-
-            -- 搜索范围内可拾取物品
-            local x, y, z = inst.Transform:GetWorldPosition()
-            local items = TheSim:FindEntities(x, y, z, pickup_radius, { "_inventoryitem" }, { "INLIMBO", "NOCLICK", "catchable", "fire", "burnt" })
-
-            -- 吸入符合条件的物品
-            for _, item in ipairs(items) do
-                if item.components.inventoryitem ~= nil 
-                    and item.components.inventoryitem.canbepickedup 
-                    and existing_items[item.prefab] -- 仅吸入已有类型的物品
-                then
-                    -- 直接吸入容器（无动画）
-                    if inst.components.container:GiveItem(item) then
-                        item:RemoveFromScene() -- 从世界移除
-                    end
-                end
-            end
-        end
-    end)
-end
-
 local function fn()
     local inst = CreateEntity()
 
@@ -340,8 +303,6 @@ local function fn()
     inst:AddComponent("knownlocations")
 
     MakeHauntableLaunch(inst)
-
-    AutoPickupItems(inst)
 
     inst:ListenForEvent("death", ondeath)
     inst:ListenForEvent("onclose", CheckForMorph)

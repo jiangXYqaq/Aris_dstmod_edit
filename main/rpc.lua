@@ -188,13 +188,6 @@ AddClassPostConstruct("widgets/controls", function(self)
     end
 end)
 
---alice_broom map telep
-AddModRPCHandler("alice", "TeleportTo", function(player, x, y, z)
-    if player:HasTag("alice") and TheWorld.Map:IsExplored(x, z) then
-        player.Transform:SetPosition(x, 0, z)
-    end
-end)
-
 local function OnAccept(inst, giver, item)
     if inst.components.alice_sword:IsMaxLevel(item.mode) then
 		giver.components.talker:Say("已经升到最高级了")

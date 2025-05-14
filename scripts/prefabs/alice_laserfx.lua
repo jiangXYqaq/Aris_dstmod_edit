@@ -8,12 +8,12 @@ local prefabs =
 }
 
 --------------------------------------------------------------------------
---需要排除目标 小虚影 阿比盖尔
+
 local AOE_RANGE = 1
 local AOE_LENTH = 8
 local AOE_TARGET_TAGS = { "_combat" }
-local AOE_TARGET_CANT_TAGS_PVE = { "INLIMBO", "flight", "invisible", "player", "playerghost", "wall", "companion", "abigail"}
-local AOE_TARGET_CANT_TAGS_PVP = { "INLIMBO", "flight", "invisible", "playerghost", "wall" ,"abigail"}
+local AOE_TARGET_CANT_TAGS_PVE = { "INLIMBO", "flight", "invisible", "player", "wall", "companion" }
+local AOE_TARGET_CANT_TAGS_PVP = { "INLIMBO", "flight", "invisible", "playerghost", "wall" }
 local MULTIHIT_FRAMES = 3
 
 local function UpdatePosition(inst)

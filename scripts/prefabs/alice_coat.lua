@@ -134,58 +134,6 @@ local function UpdateInsulationMode(inst)--改为冬暖夏凉，240点。
     end
 end
 
-local function UpdateAliceAligned(owner)
--- 确保仅在装备时生效
-    if owner.is_maid then
-        -- 阵营标签管理
-        owner:RemoveTag("lunar_aligned")
-        owner:RemoveTag("shadow_aligned")
-        
-        -- 根据当前皮肤判断阵营（假设皮肤名已通过其他逻辑更新）
-        if owner.components.skinner.skin_name == "alice_maid" then
-            owner:AddTag("lunar_aligned")  -- 月亮亲和
-        else
-            owner:AddTag("shadow_aligned") -- 暗影亲和
-        end
-
-        -- 阵营增伤逻辑（固定10%）
-        if owner.components.combat then
-            owner.components.combat.customdamagemultfn = function(attacker, target)
-                if attacker:HasTag("lunar_aligned") and target:HasTag("shadow_aligned") then
-                    return 1.10 -- 对暗影阵营增伤10%
-                elseif attacker:HasTag("shadow_aligned") and target:HasTag("lunar_aligned") then
-                    return 1.10 -- 对月亮阵营增伤10%
-                end
-                return 1.0
-            end
-        end
-
-        -- 阵营减伤逻辑（固定10%）
-        if owner.components.health then
-            owner:RemoveComponent("damagetyperesist") -- 清除旧组件
-            owner:AddComponent("damagetyperesist")
-            
-            if owner:HasTag("lunar_aligned") then
-                owner.components.damagetyperesist:AddResist("shadow", owner, 0.90) -- 暗影伤害减少10%
-            else
-                owner.components.damagetyperesist:AddResist("lunar", owner, 0.90)  -- 月亮伤害减少10%
-            end
-        end
-    else
-        -- 未装备时的清理逻辑
-        owner:RemoveTag("lunar_aligned")
-        owner:RemoveTag("shadow_aligned")
-        
-        if owner.components.combat then
-            owner.components.combat.customdamagemultfn = nil -- 清除增伤
-        end
-        
-        if owner.components.damagetyperesist then
-            owner:RemoveComponent("damagetyperesist") -- 清除减伤
-        end
-    end
-end
-
 local function onunequip(inst, owner)
     if inst.components.container ~= nil then
         inst.components.container:Close()
@@ -269,7 +217,6 @@ local function onunequip_maid(inst, owner)
         owner.components.skinner:SetSkinName(newskin)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = false
-        UpdateAliceAligned(owner)
     end
     owner.planarbouns = 0
 end
@@ -286,19 +233,16 @@ local function onequip_maid(inst, owner)
     if owner.components.health ~= nil then
         owner.components.health.externalfiredamagemultipliers:SetModifier(inst, 1 - TUNING.ARMORDRAGONFLY_FIRE_RESIST)
     end
-
-    
 	
     if owner:HasTag("alice") and owner.components.sanity then
         local oldskin = owner.components.skinner.skin_name
         local sanity = owner.components.sanity:GetPercent()
         local newskin = sanity > .5 and "alice_maid" or "alice_red_maid"
-        --maid 为正常形态；red_maid为隐藏人格
+        
 		owner.AnimState:ClearOverrideBuild(oldskin)
         owner.components.skinner:SetSkinName(newskin)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = true
-        UpdateAliceAligned(owner)
     end
     owner.planarbouns = 20
 end
