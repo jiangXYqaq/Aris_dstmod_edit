@@ -11,108 +11,9 @@ local assets =
 
 -- 注意：替换鼠标文本的功能未实现，始终显示为默认文本“打扫”。
 -- 如果需要实现该功能，请进一步修改 `actionpicker` 组件。
+-- 地图传送功能可以传送到漂浮平台上，可以传送到未探索的地形上。没有音效和特效。
 
 local UpvalueHacker = require("alice_utils/upvaluehacker")
-
-local function TeleportToPosition(inst, owner, position)
-    -- Teleportation logic is implemented and works if called directly.
-    -- Ensure the position is valid before teleporting.
-    if owner and owner:IsValid() and position then
--- 防止传送到非法位置
--- 防止传送到非法位置
-        if TheWorld.Map:IsPassableAtPoint(position.x, 0, position.z) then
-            owner.Transform:SetPosition(position.x, 0, position.z)
-            print("[Success] Teleported to:", position.x, position.z)
-        else
-            print("[Error] Teleport position blocked")
-        end
-    else
-        print("[Error] Invalid parameters for teleportation")
-    end
-end
-
-local function EnableMapTeleport(inst, owner)
-    -- Progress: Hooking into the map screen to enable teleportation.
-    -- Current Issue: Clicking on the map does not trigger teleportation logic.
-
-    -- Ensure this logic only runs on the client.
-    if not TheWorld.ismastersim then
-        return
-    end
-
-    -- Validate the owner and ensure it is the player.
-    owner = owner or (inst.components.inventoryitem and inst.components.inventoryitem:GetGrandOwner())
-    if not o or not owner.IsValid or not owner:IsValid() then
-        return
-    end
-
-    -- 严格检查实体有效性
-    if not owner or not owner.IsValidwner or not owner.IsValid or not owner:IsValid() then
-        return
-    end
-
-    -- 严格检查实体有效性
-    if not owner or not owner.IsValid or not owner:IsValid() then
-        print("[Error] EnableMapTeleport: Invalid owner", owner)
-        return
-    end
-
-    local function HookMapScreen()
-        -- Progress: Hooking into the MapScreen's OnClick function.
-        -- Current Issue: The OnClick function is not being triggered.
-
-        if owner.HUD and owner.HUD.controls and owner.HUD.controls.MapScreen then
-            local MapScreen = owner.HUD.controls.MapScreen
--- 在 HookMapScreen 中添加渲染提示
-            if not MapScreen._alice_renderHook then
-                MapScreen._alice_renderHook = true
-                local oldRender = MapScreen.Render
-                MapScreen.Render = function(self, ...)
-                    oldRender(self, ...)
-                    if self.inst:IsValid() and owner:HasTag("player") then
-                        -- 在屏幕显示提示文字
-                        local text = "点击传送"
-                        local w, h = TheSim:GetScreenSize()
-                        TheFrontEnd:GetText():DrawString(6, h - 60, text, 255, 255, 255, 255, true)
-                    end
-                end
-            end
-
-            -- 保存原版点击方法并重写
-            if not MapScreen._alice_originalOnClick then
-                MapScreen._alice_originalOnClick = MapScreen.OnClick
-                MapScreen.OnClick = function(self, x, y, ...)
-                    -- 调用原版方法以保持兼容性
-                    MapScreen._alice_originalOnClick(self, x, y, ...)
-
-                    -- 检查是否手持扫把
-                    local active_item = owner.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                    if active_item and active_item.prefab == "alice_broom" then
-                        local pos = TheWorld.Map:GetTileCenterPoint(x, 0, y)
-                        if pos and TheWorld.Map:IsPassableAtPoint(pos.x, 0, pos.z) then
-                            TeleportToPosition(inst, owner, pos)
-                                                end
-                    end
-                end
-                print("[Debug] MapScreen.OnClick hooked successfully")
-            end
-            return true
-        end
-        return false
-    end
-
-    -- Retry hooking into the MapScreen until it is available.
-    local retry_count = 0
-    inst:DoPeriodicTask(0.1, function()
-        if HookMapScreen() then
-            return true --  返回 true 终止任务
-        end
-        retry_count = retry_count + 1
-        if retry_count >= 10 then
-                        return true --  达到最大重试次数后终止
-        end
-    end)
-end
 
 local function onequip(inst, owner)
     -- Progress: Map teleport logic is triggered when the broom is equipped.
@@ -130,8 +31,6 @@ local function onequip(inst, owner)
     if not inst._had_fastpicker then
         owner:AddTag("fastpicker")
     end
-
-    EnableMapTeleport(inst, owner) -- 传递正确的 owner
 end
 
 local function onunequip(inst, owner)
@@ -182,18 +81,18 @@ end
 
 local function ReskinTarget(inst, doer, target)
     if safe_can_cast(doer, target, nil) then
-        print("[Debug] ReskinTarget called for:", target.prefab)
+        -- print("[Debug] ReskinTarget called for:", target.prefab)
         spellCB(inst, target, nil, doer)
         return true
     end
-    print("[Debug] ReskinTarget failed for:", target.prefab)
+    -- print("[Debug] ReskinTarget failed for:", target.prefab)
     return false
 end
 
 -- 确保拾取半径已定义
 if TUNING.ALICE_BROOM_PICKUP_RADIUS == nil then
-    TUNING.ALICE_BROOM_PICKUP_RADIUS = 5 -- 默认拾取半径为 5
-    print("[Debug] TUNING.ALICE_BROOM_PICKUP_RADIUS was nil. Set to default value: 5")
+    TUNING.ALICE_BROOM_PICKUP_RADIUS = 15 -- 默认拾取半径为 15
+    -- print("[Debug] TUNING.ALICE_BROOM_PICKUP_RADIUS was nil. Set to default value: 15")
 end
 
 -- 拾取功能（修复后）
@@ -204,13 +103,13 @@ local function PickUpItems(inst, doer, target)
 
     -- 确保 doer 是玩家实体并具有 inventory 组件
     if not doer.components.inventory then
-        print("[Debug] PickUpItems: Doer is not a valid player entity.")
+        -- print("[Debug] PickUpItems: Doer is not a valid player entity.")
         return false
     end
 
     -- 确保目标具有 inventoryitem 组件
     if not target.components.inventoryitem then
-        print("[Debug] PickUpItems: Target does not have an inventoryitem component. Target:", target.prefab)
+        -- print("[Debug] PickUpItems: Target does not have an inventoryitem component. Target:", target.prefab)
         return false
     end
 
@@ -222,7 +121,7 @@ local function PickUpItems(inst, doer, target)
     -- 确保搜索半径有效
     local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS
     if type(radius) ~= "number" or radius <= 0 then
-        radius = 5
+        radius = 15
     end
 
     -- 排除不可拾取物品
@@ -290,19 +189,19 @@ end
 -- 收获功能（修复后）
 local function HarvestItems(inst, doer, target)
     if target == nil or not target:IsValid() then
-        print("[Debug] HarvestItems: Invalid target")
+        -- print("[Debug] HarvestItems: Invalid target")
         return false
     end
 
     -- 确保目标具有 pickable 组件
     if not target.components.pickable then
-        print("[Debug] HarvestItems: Target does not have a pickable component. Target:", target.prefab)
+        -- print("[Debug] HarvestItems: Target does not have a pickable component. Target:", target.prefab)
         return false
     end
 
     local x, y, z = target.Transform:GetWorldPosition()
     if x == nil or y == nil or z == nil then
-        print("[Debug] HarvestItems: Invalid target position")
+        -- print("[Debug] HarvestItems: Invalid target position")
         return false
     end
 
@@ -314,18 +213,19 @@ local function HarvestItems(inst, doer, target)
     -- 查找蜂箱，范围为 2 倍 radius
     local beeboxes = TheSim:FindEntities(x, y, z, radius * 2, nil, nil, {"beebox"})
     local has_beebox_nearby = #beeboxes > 0
+    -- print("[Debug] Actual radius used:", radius, "Beebox search radius:", radius*2)
 
     -- 特殊处理：收获地面上的花瓣（不包括恶魔花），但附近有蜂箱时跳过
 --entities = TheSim:FindEntities(x, y, z, radius, must_have_tags, cant_have_tags, must_have_one_of_tags)
     local flowers = TheSim:FindEntities(x, y, z, radius, {"flower", "cattoy"}, {"INLIMBO", "FX", "NOCLICK"}) -- 只匹配prefab为"flower"的实体
-    print(string.format(
-        "[Debug] HarvestParams | PlayerPos: (%.2f, %.2f, %.2f) | Beeboxes: %d | Flowers: %d",
-        x, y, z, #beeboxes, #flowers
-    ))
+    -- print(string.format(
+    --     "[Debug] HarvestParams | PlayerPos: (%.2f, %.2f, %.2f) | Beeboxes: %d | Flowers: %d",
+    --     x, y, z, #beeboxes, #flowers
+    -- ))
 
     for _, flower in ipairs(flowers) do
         if harvested_count >= max_harvest_count then
-            print("[Debug] HarvestItems: Reached harvest limit. Stopping flower collection.")
+            -- print("[Debug] HarvestItems: Reached harvest limit. Stopping flower collection.")
             break
         end
 
@@ -342,17 +242,17 @@ local function HarvestItems(inst, doer, target)
                         loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
                     end
                     harvested_count = harvested_count + 1
-                    print("[Debug] Harvested flower:", flower.prefab)
+                    -- print("[Debug] Harvested flower:", flower.prefab)
                 end
             else
                 -- 添加玩家说话逻辑
                 if doer.components.talker then
                     doer.components.talker:Say(STRINGS.ACTIONS.ALICE_BROOM_BEEKEEPING_WARNING)
                 end
-                print("[Debug] HarvestItems: Skipping flower (beebox nearby):", flower.prefab)
+                -- print("[Debug] HarvestItems: Skipping flower (beebox nearby):", flower.prefab)
             end
         else
-            print("[Debug] HarvestItems: Invalid flower:", flower and flower.prefab or "nil")
+            -- print("[Debug] HarvestItems: Invalid flower:", flower and flower.prefab or "nil")
         end
     end
 
@@ -360,12 +260,12 @@ local function HarvestItems(inst, doer, target)
     local items = TheSim:FindEntities(x, y, z, radius, {"pickable"}, {"INLIMBO", "FX", "NOCLICK", "flower"}) -- 排除所有花
     for _, item in ipairs(items) do
         if harvested_count >= max_harvest_count then
-            print("[Debug] HarvestItems: Reached harvest limit. Stopping collection.")
+            -- print("[Debug] HarvestItems: Reached harvest limit. Stopping collection.")
             break
         end
 
         if item.components.pickable and item.components.pickable:CanBePicked() then
-            print("[Debug] HarvestItems: Picking item:", item.prefab)
+            -- print("[Debug] HarvestItems: Picking item:", item.prefab)
             local product = item.components.pickable.product
             local num = item.components.pickable.numtoharvest or 1
 
@@ -382,7 +282,7 @@ local function HarvestItems(inst, doer, target)
                 end
             end
         else
-            print("[Debug] HarvestItems: Item cannot be picked or is invalid:", item and item.prefab or "nil")
+            -- print("[Debug] HarvestItems: Item cannot be picked or is invalid:", item and item.prefab or "nil")
         end
     end
 
@@ -440,60 +340,60 @@ local function tool_fn()
     inst.components.spellcaster:SetSpellFn(function(inst, target, pos, doer)
         -- 确保参数正确传递
         if target == nil then
-            print("[Debug] SpellFn: Target is nil. Doer:", doer.prefab, "Position:", pos and (pos.x .. ", " .. pos.y .. ", " .. pos.z) or "nil")
+            -- print("[Debug] SpellFn: Target is nil. Doer:", doer.prefab, "Position:", pos and (pos.x .. ", " .. pos.y .. ", " .. pos.z) or "nil")
             return false
         end
     
         if not target:IsValid() then
-            print("[Debug] SpellFn: Target is not valid:", target.prefab or "unknown")
+            -- print("[Debug] SpellFn: Target is not valid:", target.prefab or "unknown")
             return false
         end
     
-        print("[Debug] SpellFn: Valid target:", target.prefab)
+        -- print("[Debug] SpellFn: Valid target:", target.prefab)
     
         -- 如果 pos 为 nil，尝试从目标获取位置
         if pos == nil then
             local x, y, z = target.Transform:GetWorldPosition()
             if x == nil or y == nil or z == nil then
-                print("[Debug] SpellFn: Unable to retrieve target's position.")
+                -- print("[Debug] SpellFn: Unable to retrieve target's position.")
                 return false
             end
             pos = { x = x, y = y, z = z }
-            print("[Debug] SpellFn: Retrieved target position:", pos.x, pos.y, pos.z)
+            -- print("[Debug] SpellFn: Retrieved target position:", pos.x, pos.y, pos.z)
         end
-    
+        
         -- 检查是否可以换肤
         if safe_can_cast(doer, target, pos) then
-            print("[Debug] SpellFn: Attempting reskin")
+            -- print("[Debug] SpellFn: Attempting reskin")
             spellCB(inst, target, pos, doer)
             return true
         end
 
         -- 检查是否可以收获
         if target.components.pickable and target.components.pickable:CanBePicked() then
-            print("[Debug] SpellFn: Attempting harvest")
+            -- print("[Debug] SpellFn: Attempting harvest")
             return HarvestItems(inst, doer, target)
         end
 
         -- 检查是否可以拾取
         if target.components.inventoryitem and not target:IsInLimbo() then
-            print("[Debug] SpellFn: Attempting pickup")
+            -- print("[Debug] SpellFn: Attempting pickup")
             return PickUpItems(inst, doer, target)
         end
     
-        print("[Debug] SpellFn: No valid action for target:", target.prefab)
+        -- print("[Debug] SpellFn: No valid action for target:", target.prefab)
         return false
     end)
     
     inst.components.spellcaster:SetCanCastFn(function(doer, target, pos)
         -- 确保参数正确传递
         if target == nil then
-            print("[Debug] CanCastFn: Target is nil")
+            -- print("[Debug] CanCastFn: Target is nil")
             return false
         end
     
         if not target:IsValid() then
-            print("[Debug] CanCastFn: Target is not valid:", target.prefab or "unknown")
+            -- print("[Debug] CanCastFn: Target is not valid:", target.prefab or "unknown")
             return false
         end
     
@@ -506,21 +406,13 @@ local function tool_fn()
         -- 检查是否可以收获
         local can_harvest = target.components.pickable and target.components.pickable:CanBePicked()
     
-        print("[Debug] CanCastFn: can_reskin =", can_reskin, ", can_pickup =", can_pickup, ", can_harvest =", can_harvest, ", target =", target.prefab or "unknown")
+        -- print("[Debug] CanCastFn: can_reskin =", can_reskin, ", can_pickup =", can_pickup, ", can_harvest =", can_harvest, ", target =", target.prefab or "unknown")
     
         return can_reskin or can_pickup or can_harvest
     end)
 
     inst:AddComponent("fuel")
     inst.components.fuel.fuelvalue = TUNING.MED_FUEL
-
-    -- 在装备扫把时的回调中调用 EnableMapTeleport
-    inst:ListenForEvent("equipped", function(inst, data)
-        local real_owner = data and data.owner -- 从 event data 中获取 owner
-        if real_owner then
-            EnableMapTeleport(inst, real_owner)
-        end
-    end)
 
     MakeHauntableLaunchAndIgnite(inst)
 

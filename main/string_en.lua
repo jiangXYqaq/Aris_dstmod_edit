@@ -156,9 +156,6 @@ STRINGS.CHARACTERS.ALICE.ANNOUNCE_DISCHARGE = "Everything is running smoothly, n
 STRINGS.CHARACTERS.ALICE.ANNOUNCE_NOSLEEPHASPERMANENTLIGHT = "Ah, it's too bright... I can't sleep with this light on."  -- Lighting system prevents the character from sleeping
 STRINGS.CHARACTERS.ALICE.ANNOUNCE_WX_SCANNER_FOUND_NO_DATA = "Looks like there's nothing particularly noteworthy here."  -- Scanner detects no new data nearby
 STRINGS.CHARACTERS.ALICE.ANNOUNCE_WX_SCANNER_NEW_FOUND = "Alice found something interesting!"  -- New scannable creature detected
-
-STRINGS.ACTIONS.ALICE_BROOM_BEEKEEPING_WARNING = "Beekeeping resource protocol detected. Forced harvesting violates Ecological Protection Act 7.3—request terminated."
-
 ---------- 碧蓝档案角色 --------------
 STRINGS.CHARACTERS.ALICE.DESCRIBE.YUZU = "Yuzu-senpai! What new game are you working on today?"
 
@@ -236,3 +233,9 @@ STRINGS.ALICE_MUSICBUFF = {
     DEF = "This melody makes me as firm as a rock, no attack can shake me!",
     WORK = "This music energizes me, boosting my work efficiency!",
 }
+STRINGS.ACTIONS.ALICE_BROOM_BEEKEEPING_WARNING = "Beekeeping resource protocol detected. Forced harvesting violates Ecological Protection Act 7.3—request terminated."
+STRINGS.ACTIONS.ALICE_BROOM_MAPTELE = "Teleport"
+STRINGS.ACTIONS.ALICE_BROOM_RESKIN = "Clean"
+STRINGS.ACTIONS.ALICE_BROOM_PICKUP = "Pick Up"
+STRINGS.ACTIONS.ALICE_BROOM_HARVEST = "Harvest"
+STRINGS.ACTIONS.ALICE_BROOM_DEFAULT = "Use Broom" -- Default text

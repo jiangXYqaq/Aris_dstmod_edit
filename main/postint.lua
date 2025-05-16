@@ -277,3 +277,49 @@ AddComponentPostInit("upgrademoduleowner", function(self, inst)
 		end
 	end
 end)
+
+-------------------------------------------------------
+--------------------  扫帚地图传送  --------------------
+-------------------------------------------------------
+-- 客户端判断（仅本地玩家视角）
+-- 判断某个位置是否被特定玩家探索过（客户端使用）未生效
+--[[ local function IsPositionExplored(player, pos)
+    if player and pos then
+        local x, z = pos.x, pos.z
+		if player.HUD 
+            and player.HUD.controls 
+            and player.HUD.controls.mapcontrols 
+            and player.HUD.controls.mapcontrols.map then
+            
+            local is_visible = player.HUD.controls.mapcontrols.map:IsVisible(x, z)
+            print(string.format("[Debug] IsPositionExplored: Player: %s, Position: (%.2f, %.2f), IsVisible: %s", player.prefab or "unknown", x, z, tostring(is_visible)))
+            return is_visible
+        else
+            print("[Debug] IsPositionExplored: MiniMap or HUD is missing for player:", player.prefab or "unknown")
+        end
+    else
+        print("[Debug] IsPositionExplored: Invalid parameters. Player:", player, "Position:", pos)
+    end
+    return false
+end ]]
+
+-- 绑定右键动作（客户端发起）
+AddComponentPostInit("playercontroller", function(self)
+    local old_GetMapActions = self.GetMapActions
+
+    function self:GetMapActions(position, ...)
+        local LMB, RMB = old_GetMapActions(self, position, ...)
+        
+        -- ▼ 修改点5：使用replica获取装备信息
+        local inventory = self.inst.replica.inventory
+        if inventory and inventory:GetEquippedItem(EQUIPSLOTS.HANDS) then
+            local item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+            if item and item.prefab == "alice_broom" then
+                -- ▼ 修改点6：正确创建带坐标的BufferedAction
+                RMB = BufferedAction(self.inst, nil, ACTIONS.ALICE_BROOM_MAPTELE, nil, position)
+            end
+        end
+
+        return LMB, RMB
+    end
+end)

@@ -1,6 +1,6 @@
 return {
     MAJOR = 1,
-    MINOR = 2,
-    PATCH = 5,
-    SUFFIX = "-beta" -- 可选后缀如 "-beta"
+    MINOR = 3, -- Incremented minor version for new features
+    PATCH = 0, -- Reset patch version
+    SUFFIX = "" -- Removed beta suffix as this is a stable release
 }

@@ -18,8 +18,9 @@ AddCharacterRecipe("alice_lightsword",
 AddCharacterRecipe("alice_broom",
     {
         Ingredient("cutreeds", 10),
-        Ingredient("cane", 1),
+        Ingredient("orangestaff", 1),  -- 懒人魔杖
         Ingredient("reskin_tool", 1),
+        Ingredient("poop", 4),       -- 新增体现农业属性的材料
     },
     TECH.NONE,
     {
