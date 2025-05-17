@@ -5,50 +5,178 @@ DST mod Tendou Aris（Blue Archive）edit
 
 ---
 
-## 中文版
-### 已实装改动
-- 暴击属性数值调整
-- 人物基础属性提升
-- 装备附加移速增加
-- 墨镜技能效果继承至后续王冠
-- EX技能冷却时间缩短
-- 防护板属性值及耐久度强化
-- 随从生存能力提升+升级消耗降低
-- 随从技能效果增强
-- 武器弹匣容量扩容
-- 特定技能解锁难度降低
-- EX技能快捷键设置
-- 攻击力配置选项扩展
+中文版 🇨🇳
+更新日志 v1.3.0
+🎮 角色系统
+三维强化
 
-### 开发计划
-- 专属装备快速收割效果
-- 随从物品栏永久保鲜
-- 武器攻击手感优化
+新增「启迪之冠」暴击属性继承机制（继承墨镜加成）
 
-### 特别鸣谢
-感谢原模组作者提供的创作基础，以及DeepSeek的技术支持。
+基础暴击属性值提升
 
----
+技能槽位优化：
 
-## English Version
-### Implemented Changes
-- Critical attribute adjustments
-- Base character stats enhancement
-- Equipment movement speed bonus added
-- Sunglasses skill effect extends to later crowns
-- EX skill cooldown reduction
-- Shield attributes & durability upgrade
-- Minion survivability boost + upgrade cost decrease
-- Minion skill effects amplification
-- Weapon magazine capacity expansion
-- Specific skill unlock requirements simplified
-- EX skill hotkey configuration
-- Attack power customization options
+「光之勇者」槽位减少 + 效果大幅强化
 
-### Planned Features
-- Exclusive gear quick harvest effect
-- Permanent freshness for minion inventory
-- Weapon handling optimization
+「战斗分析」槽位减少 + 效果大幅强化
 
-### Special Thanks
-Gratitude to original mod creator and technical support from DeepSeek.
+⚔️ 装备系统
+⭐爱丽丝扫帚
+
+移速加成提升至+25%（造价小幅增加）
+
+右键多功能交互（20格范围）：
+
+作物收割/远程拾取
+
+皮肤切换/地图传送（右键点击目标点）
+
+武器模块
+
+全局强化：
+
+耐久度×10
+
+充能速度提升
+
+弹匣容量扩展
+
+动态攻击力平衡调整
+
+EX技能优化：
+
+冷却 20s → 15s
+
+支持自定义快捷键
+
+🤖 随从系统
+升级优化
+
+爱丽丝手机：
+
+耐久度大幅提升
+
+血量 2000 → 10000
+
+升级材料 蓝宝石 → 冰块
+
+嘲讽技能：
+
+作用范围+30%
+
+触发频率提升
+
+音乐BUFF效果强度提升50%
+
+🚧 开发计划
+功能迭代
+
+扫地机器人：
+
+🛠️ 新增自动吸取同类物品（8格范围，零延迟）
+
+🔧 修复「激光攻击误锁阿比盖尔/小虚影」导致的异常爆炸与卡顿
+
+💥 炮弹攻击新增溅射作物破坏功能
+
+双形态系统：
+
+🌙 月亮亲和（普通形态）
+
+🌑 暗影亲和（低SAN形态）
+
+战斗优化
+
+新增武器后坐力物理模拟系统
+
+技能目标过滤逻辑增强
+
+⚠️ 已知问题：卸下充能模块可能引发服务端通信异常（导致物品复制/崩溃），建议保持装备状态
+
+English Version 🇺🇸
+Changelog v1.3.0
+🎮 Character System
+Attribute Enhancement
+
+New "Crown of Enlightenment" critical strike inheritance (from sunglasses)
+
+Base critical strike value increased
+
+Skill slot optimization:
+
+"Light Warrior" slots reduced + effects significantly enhanced
+
+"Combat Analysis" slots reduced + effects drastically boosted
+
+⚔️ Equipment System
+⭐ Alice's Broom
+
+Movement speed bonus increased to +25% (with slight cost adjustment)
+
+Right-click multifunction (20-tile range):
+
+Crop harvesting/Remote collection
+
+Skin switching/Map teleportation (right-click target)
+
+Weapon Modules
+
+Global enhancements:
+
+Durability×10
+
+Charge speed improved
+
+Magazine capacity expanded
+
+Dynamic damage balancing
+
+EX Skill upgrades:
+
+Cooldown 20s → 15s
+
+Custom hotkey support
+
+🤖 Companion System
+Upgrade Optimizations
+
+Alice's Phone：
+
+Durability significantly improved
+
+HP 2000 → 10000
+
+Upgrade material Sapphire → Ice
+
+Taunt skill：
+
+Range +30%
+
+Activation frequency increased
+
+Music BUFF effectiveness +50%
+
+🚧 Development Roadmap
+Feature Iterations
+
+Cleaning Drone：
+
+🛠️ Auto-collect similar items (8-tile range, instant)
+
+🔧 Fixed "laser targeting Abigail/Shadowlings" causing explosive entity spam
+
+💥 Added crop destruction effect to projectile splash
+
+Dual-form system：
+
+🌙 Lunar Affinity (Normal)
+
+🌑 Shadow Affinity (Low-SAN)
+
+Combat Optimizations
+
+New weapon recoil physics simulation
+
+Enhanced skill target filtering logic
+
+⚠️ Known Issue: Removing charge modules may cause server communication errors (item duplication/crash), recommend keeping equipped
