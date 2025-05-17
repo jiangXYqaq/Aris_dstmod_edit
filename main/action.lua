@@ -23,6 +23,7 @@ AddComponentAction("POINT", "inventoryitem", function(inst, doer, pos, actions, 
         fn(inst, doer, pos, actions, right, target)
     end
 end)
+
 -------------------------------------------------------
 --------------------  快捷装备物品  --------------------
 -------------------------------------------------------
@@ -307,3 +308,234 @@ table.insert(TUNING.POINTFNS_CUSTOM, check_remote_action)
 AddAction(remote_action)
 AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_REMOTE, "alice_remote"))
 AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_REMOTE, "alice_remote"))
+
+-------------------------------------------------------
+--------------------  扫帚拾取功能  --------------------
+-------------------------------------------------------
+--[[ -- 统一动作定义（动态处理所有交互）
+local broom_action = Action({ priority = 5 })
+broom_action.id = "ALICE_BROOM_ACTION"
+broom_action.strfn = function(act)
+    -- 动态获取目标类型
+    if act.target then
+        if safe_can_cast(act.doer, act.target) then
+            return STRINGS.ACTIONS.ALICE_BROOM_RESKIN
+        elseif act.target.components.pickable and act.target.components.pickable:CanBePicked() then
+            return STRINGS.ACTIONS.ALICE_BROOM_HARVEST
+        elseif act.target.components.inventoryitem then
+            return STRINGS.ACTIONS.ALICE_BROOM_PICKUP
+        end
+    end
+    return STRINGS.ACTIONS.ALICE_BROOM_DEFAULT -- 默认文本
+end
+
+broom_action.fn = function(act)
+    if act.target and act.doer then
+        -- 复用你的现有条件判断
+        if safe_can_cast(act.doer, act.target) then
+            return ReskinTarget(act.invobject, act.doer, act.target)
+        elseif act.target.components.pickable and act.target.components.pickable:CanBePicked() then
+            return HarvestItems(act.invobject, act.doer, act.target)
+        elseif act.target.components.inventoryitem then
+            return PickUpItems(act.invobject, act.doer, act.target)
+        end
+    end
+    return false
+end
+
+AddAction(broom_action)
+
+-- 通用检测函数
+local function CheckBroomAction(inst, doer, target, actions)
+    if doer and doer.components.inventory then
+        local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if tool and tool.prefab == "alice_broom" then
+            -- 基于你的现有条件判断
+            if safe_can_cast(doer, target) or 
+               (target.components.pickable and target.components.pickable:CanBePicked()) or 
+               target.components.inventoryitem then
+                table.insert(actions, ACTIONS.ALICE_BROOM_ACTION)
+            end
+        end
+    end
+end
+
+-- 注册到所有可能的目标类型
+AddComponentAction("SCENE", "inventoryitem", CheckBroomAction)
+AddComponentAction("POINT", "pickable", CheckBroomAction)
+AddComponentAction("SCENE", "reskinable", CheckBroomAction) -- 如果原版有reskinable组件
+
+-- 状态图处理
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_ACTION, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_ACTION, "doshortaction")) ]]
+
+-- 换肤动作（覆盖原版RESKIN）
+local reskin_action = Action({ priority = 5 })
+reskin_action.id = "ALICE_BROOM_RESKIN"
+reskin_action.str = STRINGS.ACTIONS.ALICE_BROOM_RESKIN -- 使用原版文本
+
+reskin_action.fn = function(act)
+    if act.target == nil then
+       -- print("[Debug] ReskinAction: Target is nil. Doer:", act.doer and act.doer.prefab or "nil")
+        return false
+    end
+
+    -- 修复：添加安全检查，确保 doer 是玩家实体
+    if not act.doer or not act.doer.components or not act.doer.components.inventory then
+        --print("[Debug] ReskinAction: Invalid doer. Doer:", act.doer and act.doer.prefab or "nil")
+        return false
+    end
+
+    local tool = act.doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        --print("[Debug] ReskinAction: Attempting to reskin target:", act.target.prefab)
+        return ReskinTarget(tool, act.doer, act.target)
+    end
+
+    --print("[Debug] ReskinAction: No valid tool or target")
+    return false
+end
+
+-- 换肤动作检测
+local function CheckReskinAction(inst, doer, target, actions)
+    if target == nil then
+        --print("[Debug] CheckReskinAction: Target is nil")
+        return
+    end
+
+    local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        if safe_can_cast(doer, target, nil) then
+            --print("[Debug] CheckReskinAction: Adding reskin action for target:", target.prefab)
+            table.insert(actions, ACTIONS.ALICE_BROOM_RESKIN)
+        --else
+            --print("[Debug] CheckReskinAction: Target not valid for reskin:", target.prefab)
+        end
+    --else
+        --print("[Debug] CheckReskinAction: No valid tool equipped")
+    end
+end
+
+-- 拾取动作（独立注册）
+local pickup_action = Action({ priority = 6 }) -- 优先级低于换肤
+pickup_action.id = "ALICE_BROOM_PICKUP"
+pickup_action.str = STRINGS.ACTIONS.ALICE_BROOM_PICKUP -- 确保已定义
+
+pickup_action.fn = function(act)
+    if act.target == nil then
+        --print("[Debug] PickupAction: Target is nil. Doer:", act.doer.prefab)
+        return false
+    end
+
+	-- 修复：添加安全检查，确保 doer 是玩家实体
+    if not act.doer or not act.doer.components or not act.doer.components.inventory then
+        --print("[Debug] ReskinAction: Invalid doer. Doer:", act.doer and act.doer.prefab or "nil")
+        return false
+    end
+
+    local tool = act.doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        --print("[Debug] PickupAction: Attempting to pick up target:", act.target.prefab)
+        return PickUpItems(tool, act.doer, act.target)
+    end
+
+    --print("[Debug] PickupAction: No valid tool or target")
+    return false
+end
+
+-- 拾取动作检测
+local function CheckPickupAction(inst, doer, target, actions)
+    if target == nil then
+        --print("[Debug] CheckPickupAction: Target is nil")
+        return
+    end
+
+	-- 修复：添加安全检查，确保 doer 是玩家实体
+    if not doer or not doer.components or not doer.components.inventory then
+        --print("[Debug] ReskinAction: Invalid doer. Doer:", doer and doer.prefab or "nil")
+        return false
+    end
+
+	--qu
+    local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if tool and tool.prefab == "alice_broom" then
+        local inventoryitem = target.components.inventoryitem
+        if inventoryitem 
+            and inventoryitem.canbepickedup 
+            and not target:HasOneOfTags({"heavy", "irreplaceable", "FX"})
+        then
+            --print("[Debug] CheckPickupAction: Adding pickup action for target:", target.prefab)
+            table.insert(actions, ACTIONS.ALICE_BROOM_PICKUP)
+        else
+            --print("[Debug] CheckPickupAction: Target not valid for pickup:", target.prefab)
+        end
+    else
+        --print("[Debug] CheckPickupAction: No valid tool equipped")
+    end
+end
+
+-- 注册到POINT类型检测（在现有注册代码后添加）
+table.insert(TUNING.POINTFNS_CUSTOM, CheckBroomPickupAction)
+AddAction(reskin_action)
+AddAction(pickup_action)
+-- 注册到组件检测
+AddComponentAction("USEITEM", "inventoryitem", CheckReskinAction)
+AddComponentAction("USEITEM", "inventoryitem", CheckPickupAction)
+
+-- 添加动作状态处理（在文件底部添加）
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_RESKIN, "doshortaction"))
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_PICKUP, "doshortaction"))
+-------------------------------------------------------
+--------------------  扫帚地图传送  --------------------
+-------------------------------------------------------
+local teleport_action = Action({
+    priority = 10,                    -- 确保高于其他地图动作
+    mount_valid = true,
+    rmb = true,                       -- 右键触发
+    map_action = true,                -- 关键属性：标记为地图点击动作
+    do_not_locomote = true,           -- 禁止自动移动
+    instant = true,                   -- 即时动作
+    range = 999,                      -- 确保地图点击有效
+})
+teleport_action.id = "ALICE_BROOM_MAPTELE"
+teleport_action.str = STRINGS.ACTIONS.ALICE_BROOM_MAPTELE -- 绑定文本
+
+-- 动作逻辑（保持你的验证逻辑不变）
+teleport_action.fn = function(act)
+    if not TheWorld.ismastersim then
+        return false -- 客户端直接返回
+    end
+
+    local doer = act.doer
+    local pos = act:GetActionPoint()
+
+    if not (doer and pos and doer.components.inventory) then
+        return false
+    end
+
+    local item = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if not (item and item.prefab == "alice_broom") then
+        return false
+    end
+
+    if not TheWorld.Map:IsPassableAtPoint(pos.x, 0, pos.z) then
+        return false
+    end
+
+    doer:PushEvent("performaction", { action = act })
+    doer.Transform:SetPosition(pos.x, 0, pos.z)
+    
+    return true
+end
+
+-- ▼ 注册到全局动作系统（必须在状态图注册之前）
+AddAction(teleport_action)
+
+-- 状态图处理（保持你的动画逻辑）
+AddStategraphActionHandler("wilson", ActionHandler(ACTIONS.ALICE_BROOM_MAPTELE, "quicktele"))
+AddStategraphActionHandler("wilson_client", ActionHandler(ACTIONS.ALICE_BROOM_MAPTELE, function(inst)
+    inst:PerformPreviewBufferedAction()
+    return "quicktele"
+end))

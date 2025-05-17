@@ -148,6 +148,10 @@ local function onunequip(inst, owner)
         inst.UpdateInsulationTask:Cancel()
         inst.UpdateInsulationTask = nil
     end
+
+    if owner.components.health ~= nil then
+        owner.components.health.externalfiredamagemultipliers:RemoveModifier(inst)
+    end
     
     if owner:HasTag("alice") then
         owner.AnimState:ClearOverrideSymbol("arm_lower")
@@ -176,7 +180,9 @@ local function onequip(inst, owner)
         end)
     end
     UpdateInsulationMode(inst)  -- 立即生效
-	
+	if owner.components.health ~= nil then
+        owner.components.health.externalfiredamagemultipliers:SetModifier(inst, 1 - TUNING.ARMORDRAGONFLY_FIRE_RESIST)
+    end
     if owner:HasTag("alice") then
         if inst.setSkin == nil then
             inst.setSkin = function(owner)
@@ -198,6 +204,10 @@ local function onunequip_maid(inst, owner)
         inst.UpdateInsulationTask = nil
     end
 	
+    if owner.components.health ~= nil then
+        owner.components.health.externalfiredamagemultipliers:RemoveModifier(inst)
+    end
+
     if owner:HasTag("alice") and owner.components.sanity then
         local oldskin = owner.components.skinner.skin_name
         local sanity = owner.components.sanity:GetPercent()
@@ -219,6 +229,10 @@ local function onequip_maid(inst, owner)
         end)
     end
     UpdateInsulationMode(inst)  -- 立即生效
+
+    if owner.components.health ~= nil then
+        owner.components.health.externalfiredamagemultipliers:SetModifier(inst, 1 - TUNING.ARMORDRAGONFLY_FIRE_RESIST)
+    end
 	
     if owner:HasTag("alice") and owner.components.sanity then
         local oldskin = owner.components.skinner.skin_name
@@ -357,7 +371,7 @@ local function common()
     inst.components.armor:InitIndestructible(0)
 	inst.components.armor.ontakedamage = OnTakeDamage
 	inst.components.armor.keeponfinished = true
-	inst.components.armor:InitCondition(TUNING.ARMORDRAGONFLY, TUNING.ARMORDRAGONFLY_ABSORPTION) --免疫火焰伤害
+	 --免疫火焰伤害
 	--getprefab.RemoveEventCallback(inst, "percentusedchange")
 
 	inst:AddComponent("planardefense")

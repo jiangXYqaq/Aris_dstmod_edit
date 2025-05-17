@@ -156,6 +156,15 @@ AddModRPCHandler("alice", "setvolume", function(player, remote, volume)
     remote.localsounds.SoundEmitter:SetVolume("ragtime", remote.volume)
 end)
 
+AddModRPCHandler("alice", "teleport", function(player, x, z)
+    if player and player.Transform then
+        print("[Debug] RPC: Teleporting player to", x, z) -- Debug log
+        player.Transform:SetPosition(x, 0, z)
+    else
+        print("[Debug] RPC: Failed to teleport player. Invalid player or position.") -- Debug log
+    end
+end)
+
 local function AcceptTest(inst, item)
     return not inst.components.alice_sword:IsMaxLevel(item.mode)
 end
