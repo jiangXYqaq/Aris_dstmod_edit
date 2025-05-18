@@ -456,6 +456,12 @@ local function CheckPickupAction(inst, doer, target, actions)
         return false
     end
 
+    -- 新增：检测玩家是否正在拖动物品（鼠标持有物品）
+    if doer.components.inventory:GetActiveItem() ~= nil then
+        return -- 如果拖动物品，则直接跳过拾取动作
+    end
+
+
 	--qu
     local tool = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
     if tool and tool.prefab == "alice_broom" then
