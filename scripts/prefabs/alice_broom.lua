@@ -125,6 +125,7 @@ local function PickUpItems(inst, doer, target)
     end
 
     -- 排除不可拾取物品
+    -- issue #5 need to handle this
     local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
         return false
@@ -184,6 +185,86 @@ local function PickUpItems(inst, doer, target)
     end
 
     return true
+end
+
+local function ProcessFarmPlant(crop_entity, doer)
+    -- Ensure the crop name matches the original naming convention
+    local base_crop = crop_entity.prefab:match("^farm_plant_(.+)$")
+    if not base_crop then
+        -- Ignore non-standard crop names
+        -- support for other mod crops edit this
+        return false
+    end
+
+    -- Define product configurations
+    local products = {
+        normal_veg = base_crop,                   -- Regular crop (e.g., carrot)
+        normal_seed = base_crop .. "_seeds",      -- Regular seed
+        giant_veg = base_crop .. "_oversized"     -- Giant crop product
+    }
+
+    -- Validate product existence
+    local can_normal = PrefabExists(products.normal_veg) and PrefabExists(products.normal_seed)
+    if not can_normal then
+        -- Ignore crops with missing product definitions
+        return false
+    end
+
+    -- Get crop position
+    local x, y, z = crop_entity.Transform:GetWorldPosition()
+    local is_oversized = crop_entity.is_oversized
+
+    -- Determine output based on stress value
+    local stress = crop_entity.components.farmplantstress and crop_entity.components.farmplantstress:GetFinalStressState() or 0
+    local veg_count, seed_count = 0, 0
+
+    if is_oversized then
+        --magicgrowable = true 
+        --if use magic book even if stress is 0 is_oversized = false
+        veg_count, seed_count = 2.75 * 2, 2.25 * 2 -- Double the output
+    elseif stress <= 6 then
+        veg_count, seed_count = 1 * 2, 2 * 2
+    elseif stress <= 11 then
+        veg_count, seed_count = 1 * 2, 1 * 2
+    else
+        veg_count, seed_count = 1 * 2, 0
+    end
+
+    -- Remove the crop entity
+    -- may not compatible with mods like crop regrowth
+    crop_entity:Remove()
+
+    -- Handle fractional parts using probabilities
+    local function spawn_items(prefab, count)
+        local whole = math.floor(count)
+        local fractional = count - whole
+
+        -- Spawn whole items
+        for _ = 1, whole do
+            local item = SpawnPrefab(prefab)
+            if not doer.components.inventory:GiveItem(item) then
+                -- Drop near the player if inventory is full
+                local px, py, pz = doer.Transform:GetWorldPosition()
+                item.Transform:SetPosition(px + math.random(-1, 1), py, pz + math.random(-1, 1))
+            end
+        end
+
+        -- Handle fractional part with probability
+        if math.random() < fractional then
+            local item = SpawnPrefab(prefab)
+            if not doer.components.inventory:GiveItem(item) then
+                -- Drop near the player if inventory is full
+                local px, py, pz = doer.Transform:GetWorldPosition()
+                item.Transform:SetPosition(px + math.random(-1, 1), py, pz + math.random(-1, 1))
+            end
+        end
+    end
+
+    -- Spawn vegetables and seeds
+    spawn_items(products.normal_veg, veg_count)
+    spawn_items(products.normal_seed, seed_count)
+
+    return true, is_oversized
 end
 
 -- 收获功能（修复后）
@@ -256,36 +337,48 @@ local function HarvestItems(inst, doer, target)
         end
     end
 
-    -- 查找目标及其周围的可收获物品，排除所有花
-    local items = TheSim:FindEntities(x, y, z, radius, {"pickable"}, {"INLIMBO", "FX", "NOCLICK", "flower"}) -- 排除所有花
-    for _, item in ipairs(items) do
+        -- 第一阶段：专门处理农田作物（包含 farm_plant 标签）
+    local farm_plant_items = TheSim:FindEntities(x, y, z, radius, {"pickable", "farm_plant"}, {"INLIMBO", "FX", "NOCLICK", "flower"})
+    for _, item in ipairs(farm_plant_items) do
         if harvested_count >= max_harvest_count then
-            -- print("[Debug] HarvestItems: Reached harvest limit. Stopping collection.")
             break
         end
 
         if item.components.pickable and item.components.pickable:CanBePicked() then
+            if item.prefab and item.components.farmplantstress then
+                local success, is_oversized = ProcessFarmPlant(item, doer)
+                if success then
+                    harvested_count = harvested_count + (is_oversized and 5 or 2)
+                end
+            end
+        end
+    end
+
+        -- 第二阶段：处理其他可收获物品（排除 farm_plant 标签）
+    local non_farm_items = TheSim:FindEntities(x, y, z, radius, {"pickable"}, {"INLIMBO", "FX", "NOCLICK", "flower", "farm_plant"})
+    for _, item in ipairs(non_farm_items) do
+        if harvested_count >= max_harvest_count then
+            break
+        end
+
+        if item.components.pickable and item.components.pickable:CanBePicked() then
+            -- 原始普通物品收获逻辑（对应行349附近代码）
             -- print("[Debug] HarvestItems: Picking item:", item.prefab)
             local product = item.components.pickable.product
             local num = item.components.pickable.numtoharvest or 1
 
-            -- 收获物品
             item.components.pickable:Pick(doer)
             harvested_count = harvested_count + 1
 
-            -- 将产物放入玩家背包
+            -- 产物放入背包或掉落
             for i = 1, num do
                 local loot = SpawnPrefab(product)
                 if loot and not doer.components.inventory:GiveItem(loot) then
-                    -- 修复：背包满时将物品掉落在玩家位置
                     loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
                 end
             end
-        else
-            -- print("[Debug] HarvestItems: Item cannot be picked or is invalid:", item and item.prefab or "nil")
         end
     end
-
     return harvested_count > 0
 end
 
