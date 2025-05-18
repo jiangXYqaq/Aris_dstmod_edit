@@ -113,6 +113,14 @@ local function PickUpItems(inst, doer, target)
         return false
     end
 
+    -- 忽略具有 container 组件的物品，以防止数据丢失
+    if target.components.container or target:HasTag("bundle") then
+        if doer.components.talker then
+            doer.components.talker:Say(STRINGS.ACTIONS.ALICE_BROOM_SENSEI_WARNING)
+        end
+        return false
+    end
+
     local x, y, z = target.Transform:GetWorldPosition()
     if x == nil or y == nil or z == nil then
         return false
@@ -130,11 +138,6 @@ local function PickUpItems(inst, doer, target)
         return false
     end
 
-    -- 检查玩家是否有 inventory 组件
-    if not doer.components.inventory then
-        return false
-    end
-
     -- 查找目标及其周围同类物品
     local target_prefab = target.prefab
     local items = TheSim:FindEntities(x, y, z, radius, nil, exclude_tags)
@@ -148,6 +151,7 @@ local function PickUpItems(inst, doer, target)
             and item.components.inventoryitem 
             and item.components.inventoryitem.canbepickedup 
             and not item:IsInLimbo() 
+            and not item.components.container -- 忽略容器物品
         then
             local stack_size = 1
             if item.components.stackable then
