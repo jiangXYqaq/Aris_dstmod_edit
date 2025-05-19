@@ -6,7 +6,9 @@ DST mod Tendou Aris（Blue Archive）edit
 ---
 
 中文版 🇨🇳
-更新日志 v1.3.0
+更新日志 v1.3.1
+✅ **BUG修复**
+- 修复 issue #3、#4、#5、#7、#8 相关异常
 🎮 角色系统
 三维强化
 
@@ -75,8 +77,6 @@ EX技能优化：
 
 🛠️ 新增自动吸取同类物品（8格范围，零延迟）
 
-🔧 修复「激光攻击误锁阿比盖尔/小虚影」导致的异常爆炸与卡顿
-
 💥 炮弹攻击新增溅射作物破坏功能
 
 双形态系统：
@@ -91,10 +91,14 @@ EX技能优化：
 
 技能目标过滤逻辑增强
 
-⚠️ 已知问题：卸下充能模块可能引发服务端通信异常（导致物品复制/崩溃），建议保持装备状态
+📜 文案优化
+- 全面修订中文文本描述，使其更符合角色设定
+- 同步校正与实际数据不符的文本参数
 
 English Version 🇺🇸
-Changelog v1.3.0
+Changelog v1.3.1
+✅ **Hotfixes**
+- Fixed critical bugs related to issue #3, #4, #5, #7, #8
 🎮 Character System
 Attribute Enhancement
 
@@ -163,8 +167,6 @@ Cleaning Drone：
 
 🛠️ Auto-collect similar items (8-tile range, instant)
 
-🔧 Fixed "laser targeting Abigail/Shadowlings" causing explosive entity spam
-
 💥 Added crop destruction effect to projectile splash
 
 Dual-form system：
@@ -179,4 +181,6 @@ New weapon recoil physics simulation
 
 Enhanced skill target filtering logic
 
-⚠️ Known Issue: Removing charge modules may cause server communication errors (item duplication/crash), recommend keeping equipped
+📃 Localization Update
+- Adjusting Chinese localization to better reflect character lore
+- Synchronizing text descriptions with actual game data
