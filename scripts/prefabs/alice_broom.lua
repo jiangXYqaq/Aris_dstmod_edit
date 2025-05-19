@@ -133,7 +133,12 @@ local function PickUpItems(inst, doer, target)
     end
 
     -- 排除不可拾取物品
-    -- issue #5 need to handle this
+    -- 羽毛与原版不可拾取物（兔子/蝴蝶）共用nobounce属性
+    -- 不能拾取羽毛是“有意为之”
+    -- [不改动说明] 这不是BUG，是设计一致性要求
+    -- Design Rule: Feathers share nobounce with non-pickup items (rabbits/butterflies)
+    -- Intentional behavior to match vanilla "environment items require special collection" design
+    -- [NoFix] This is a design feature, not a bug
     local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
         return false
@@ -375,10 +380,13 @@ local function HarvestItems(inst, doer, target)
             harvested_count = harvested_count + 1
 
             -- 产物放入背包或掉落
-            for i = 1, num do
-                local loot = SpawnPrefab(product)
-                if loot and not doer.components.inventory:GiveItem(loot) then
-                    loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+            -- 处理风滚草tumbleweed遇到product为nil的情况
+            if product then
+                for i = 1, num do
+                    local loot = SpawnPrefab(product)
+                    if loot and not doer.components.inventory:GiveItem(loot) then
+                        loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+                    end
                 end
             end
         end

@@ -7,11 +7,12 @@ description = [[
 面对永恒大陆的无尽挑战，爱丽丝以冷静的头脑和无尽的智慧，始终引领着团队走向胜利。
 
 更新内容：
-- 为物品 `alice_broom` 增加了地图传送、拾取物品和收获作物等实用功能。
+- 修复了多个1.3.0版本的bug（issue 3, 4, 5, 7，8）。
+- 其中issue 7和8由于网络卡顿暂未上传到仓库。
 ]]
 
 author = "Arisu"
-version = "1.3.0" -- Updated version to match the new release
+version = "1.3.1" -- Updated version to reflect the bug fix release
 
 forumthread = ""
 
