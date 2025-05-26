@@ -59,12 +59,20 @@ end
 local function OnSave(inst, data)
 	data._had_fastbuilder = inst._had_fastbuilder
 	data._had_fastpicker = inst._had_fastpicker
+    data.has_speed_upgrade = inst.has_speed_upgrade
+    data.has_teleport_upgrade = inst.has_teleport_upgrade
 end
 
 local function OnLoad(inst, data)
     if data then
         inst._had_fastbuilder = data._had_fastbuilder
         inst._had_fastpicker = data._had_fastpicker
+        inst.has_speed_upgrade = data.has_speed_upgrade or false
+        inst.has_teleport_upgrade = data.has_teleport_upgrade or false
+         -- 加载后应用升级效果
+        if inst.has_speed_upgrade then
+            inst.components.equippable.walkspeedmult = TUNING.ALICE_BROOM_SPEED_MULT + 0.5
+        end
     end
 end
 
@@ -115,9 +123,7 @@ local function PickUpItems(inst, doer, target)
 
     -- 忽略具有 container 组件的物品，以防止数据丢失
     if target.components.container or target:HasTag("bundle") then
-        if doer.components.talker then
-            doer.components.talker:Say(STRINGS.ACTIONS.ALICE_BROOM_SENSEI_WARNING)
-        end
+        
         return false
     end
 
@@ -133,12 +139,7 @@ local function PickUpItems(inst, doer, target)
     end
 
     -- 排除不可拾取物品
-    -- 羽毛与原版不可拾取物（兔子/蝴蝶）共用nobounce属性
-    -- 不能拾取羽毛是“有意为之”
-    -- [不改动说明] 这不是BUG，是设计一致性要求
-    -- Design Rule: Feathers share nobounce with non-pickup items (rabbits/butterflies)
-    -- Intentional behavior to match vanilla "environment items require special collection" design
-    -- [NoFix] This is a design feature, not a bug
+    -- issue #5 need to handle this
     local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
         return false
@@ -380,13 +381,10 @@ local function HarvestItems(inst, doer, target)
             harvested_count = harvested_count + 1
 
             -- 产物放入背包或掉落
-            -- 处理风滚草tumbleweed遇到product为nil的情况
-            if product then
-                for i = 1, num do
-                    local loot = SpawnPrefab(product)
-                    if loot and not doer.components.inventory:GiveItem(loot) then
-                        loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
-                    end
+            for i = 1, num do
+                local loot = SpawnPrefab(product)
+                if loot and not doer.components.inventory:GiveItem(loot) then
+                    loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
                 end
             end
         end
@@ -481,7 +479,7 @@ local function tool_fn()
         end
 
         -- 检查是否可以拾取
-        if target.components.inventoryitem and not target:IsInLimbo() then
+        if target.components.inventoryitem and not target:IsInLimbo() and not target.prefab == "alice_remote" then
             -- print("[Debug] SpellFn: Attempting pickup")
             return PickUpItems(inst, doer, target)
         end
@@ -522,6 +520,41 @@ local function tool_fn()
     MakeHauntableLaunchAndIgnite(inst)
 
     inst._cached_reskinname = {}
+
+    -- 添加交易组件
+    inst:AddComponent("trader")
+    inst.components.trader.acceptnontradable = true
+    inst.components.trader:SetAcceptTest(function(inst, item, giver)
+        -- 海象牙交易检查
+        if item.prefab == "rabbit" and not inst.has_speed_upgrade then
+            return true
+        -- 橙宝石交易检查
+        elseif item.prefab == "orangegem" and not inst.has_teleport_upgrade then
+            return true
+        end
+        return false
+    end)
+    
+    inst.components.trader.onrefuse = function(inst, giver, item)
+        -- 可选：添加拒绝音效或提示
+    end
+    
+    inst.components.trader.onaccept = function(inst, giver, item)
+        -- 处理海象牙交易
+        if item.prefab == "rabbit" then
+            inst.has_speed_upgrade = true
+            -- 提升移动速度（假设基础值1.0）
+            inst.components.equippable.walkspeedmult = TUNING.ALICE_BROOM_SPEED_MULT + 0.5
+            
+        -- 处理橙宝石交易
+        elseif item.prefab == "orangegem" then
+            inst.has_teleport_upgrade = true
+        end
+    end
+
+    -- 初始化升级状态
+    inst.has_speed_upgrade = false
+    inst.has_teleport_upgrade = false
 
 	inst.OnSave = OnSave
 	inst.OnLoad = OnLoad
