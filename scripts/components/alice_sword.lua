@@ -197,10 +197,10 @@ end
 
 AddModRPCHandler("alice", "switch_to_ex_mode", function(player)
     local sword = player.components.inventory:GetEquippedItem(GLOBAL.EQUIPSLOTS.HANDS)
-	print("sword=", sword)
+	--print("sword=", sword)
     -- 直接通过Prefab名称判断武器类型
     if sword and sword.prefab == "alice_lightsword" then
-		print("hand=alice_sword")
+		--print("hand=alice_sword")
         local sword_component = sword.components.alice_sword
         if sword_component.mode ~= 3 then
             -- 切换到EX模式
