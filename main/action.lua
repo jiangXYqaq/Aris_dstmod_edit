@@ -522,9 +522,16 @@ teleport_action.fn = function(act)
     end
 
     local item = doer.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-    if not (item and item.prefab == "alice_broom") then
+    if not (item and item.prefab == "alice_broom" ) then
         return false
     end
+
+    if not item.has_teleport_upgrade then
+        -- 如果没有传送升级，提示玩家
+        -- not working
+        --teleport_action.str = STRINGS.ACTIONS.ALICE_BROOM_LOCK_MAPTELE -- Update action text
+        return false
+    end 
 
     if not TheWorld.Map:IsPassableAtPoint(pos.x, 0, pos.z) then
         return false
