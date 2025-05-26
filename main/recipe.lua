@@ -18,7 +18,7 @@ AddCharacterRecipe("alice_lightsword",
 AddCharacterRecipe("alice_broom",
     {
         Ingredient("cutreeds", 10),
-        Ingredient("orangestaff", 1),  -- 懒人魔杖
+        --Ingredient("orangestaff", 1),  -- 懒人魔杖
         Ingredient("reskin_tool", 1),
         Ingredient("poop", 4),       -- 新增体现农业属性的材料
     },
@@ -113,18 +113,30 @@ AddCharacterRecipe("alice_mode3",
     {"MODS", "WEAPONS"}
 )
 
--- 高能激光刀刃模块
-AddCharacterRecipe("alice_mode4",
+-- 高能激光刀刃模块（启迪碎片配方）
+AddRecipe2(
+    "alice_mode4_shard", -- Unique recipe name
     {
         Ingredient("alterguardianhatshard", 1),
         Ingredient("gears", 1),
         Ingredient("transistor", 4),
     },
     TECH.NONE,
+    {product = "alice_mode4", numtogive = 1}, -- Produces the prefab "alice_mode4"
+    {"MODS", "WEAPONS","CHARACTER"}
+)
+
+-- 高能激光刀刃模块（骷髅盔甲配方）
+AddRecipe2(
+    "alice_mode4_skeleton", -- Unique recipe name
     {
-        builder_tag = "alice",
+        Ingredient("armorskeleton", 1),
+        Ingredient("gears", 1),
+        Ingredient("transistor", 4),
     },
-    {"MODS", "WEAPONS"}
+    TECH.NONE,
+    {product = "alice_mode4", numtogive = 1}, -- Produces the prefab "alice_mode4"
+    {"MODS", "WEAPONS", "CHARACTER"}
 )
 
 -- 木制防护板

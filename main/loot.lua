@@ -32,6 +32,7 @@ AddPrefabPostInit("minotaur", function(inst)
         
         -- 添加新模式蓝图（100%掉落）
         lootdropper:AddChanceLoot("alice_mode2_blueprint", 1) -- 1=100%概率
+        lootdropper:AddChanceLoot("trinket_5", 1)
     end)
 end)
 

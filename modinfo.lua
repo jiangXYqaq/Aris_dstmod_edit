@@ -7,12 +7,26 @@ description = [[
 面对永恒大陆的无尽挑战，爱丽丝以冷静的头脑和无尽的智慧，始终引领着团队走向胜利。
 
 更新内容：
-- 修复了多个1.3.0版本的bug（issue 3, 4, 5, 7，8）。
-- 其中issue 7和8由于网络卡顿暂未上传到仓库。
+## 更新说明 v1.3.2
+
+### 🐛 Bug修复
+- 修复机器人溺水后贴图消失问题（通过防止机器人溺水实现）issue #11
+- 修复激光目标选取错误导致的异常卡顿 issue #10
+
+### ✨ 新增功能与调整
+- **扫把配方升级**：
+  - 现在需要兔子和橙宝石进行升级
+  - 兔子：提升移动速度加成效果
+  - 橙宝石：解锁地图传送功能
+- 调整扫把和护甲的移动速度加成数值
+- 新增基础移动速度加成机制
+
+### 🧹 代码优化
+- 移除冗余调试信息注释
 ]]
 
 author = "Arisu"
-version = "1.3.1" -- Updated version to reflect the bug fix release
+version = "1.3.2" -- Updated version to reflect the latest release
 
 forumthread = ""
 
@@ -51,7 +65,7 @@ configuration_options =
 		label = en_zh("Information Key", "信息面板按键"),
 		hover = en_zh("Set the shortcut key for the lightsword information", "设置光之剑信息面板快捷键"),
         options = key_options,
-		default = "KEY_E",
+		default = "KEY_Q",
 	},
 	{
         name = "EX_MODE_KEY",

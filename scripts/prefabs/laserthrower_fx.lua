@@ -9,7 +9,7 @@ local prefabs =
 
 local AOE_RANGE = 1
 local AOE_LENTH = 8
-local AOE_TARGET_TAGS = { "_combat" }
+local AOE_TARGET_TAGS = { "_combat" , "_health"}
 local AOE_TARGET_CANT_TAGS_PVE = { "INLIMBO", "flight", "invisible", "player", "wall", "companion", "playerghost", "DECOR", "FX" }
 local AOE_TARGET_CANT_TAGS_PVP = { "INLIMBO", "flight", "invisible", "playerghost", "wall", "DECOR", "FX"}
 local MULTIHIT_FRAMES = 3
