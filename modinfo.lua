@@ -51,7 +51,7 @@ configuration_options =
 		label = en_zh("Information Key", "信息面板按键"),
 		hover = en_zh("Set the shortcut key for the lightsword information", "设置光之剑信息面板快捷键"),
         options = key_options,
-		default = "KEY_E",
+		default = "KEY_Q",
 	},
 	{
         name = "EX_MODE_KEY",
