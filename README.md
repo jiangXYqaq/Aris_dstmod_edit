@@ -6,9 +6,9 @@ DST mod Tendou Aris（Blue Archive）edit
 ---
 
 中文版 🇨🇳
-更新日志 v1.3.1
+更新日志 v1.3.2
 ✅ **BUG修复**
-- 修复 issue #3、#4、#5、#7、#8 相关异常
+- 修复 issue #10 #11 
 🎮 角色系统
 三维强化
 
@@ -25,7 +25,10 @@ DST mod Tendou Aris（Blue Archive）edit
 ⚔️ 装备系统
 ⭐爱丽丝扫帚
 
-移速加成提升至+25%（造价小幅增加）
+移速加成+25%
+- 需要兔子和橙宝石进行升级
+  - 兔子：移动速度加成效果提升
+  - 橙宝石：解锁地图传送功能
 
 右键多功能交互（20格范围）：
 
@@ -98,7 +101,7 @@ EX技能优化：
 English Version 🇺🇸
 Changelog v1.3.1
 ✅ **Hotfixes**
-- Fixed critical bugs related to issue #3, #4, #5, #7, #8
+- Fixed critical bugs related to issue #10，#11
 🎮 Character System
 Attribute Enhancement
 
@@ -115,7 +118,11 @@ Skill slot optimization:
 ⚔️ Equipment System
 ⭐ Alice's Broom
 
-Movement speed bonus increased to +25% (with slight cost adjustment)
+Movement speed bonus increased to +25%
+
+- Now requires Rabbits and Orange Gems to upgrade
+  - Rabbit: Enhances movement speed bonus
+  - Orange Gem: Unlocks map teleportation
 
 Right-click multifunction (20-tile range):
 
