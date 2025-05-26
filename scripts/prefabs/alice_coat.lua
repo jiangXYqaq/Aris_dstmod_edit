@@ -406,6 +406,7 @@ local function battle()
     inst:AddComponent("equippable")
     inst.components.equippable.equipslot = EQUIPSLOTS.BODY
 	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE --增加回san效果
+    inst.components.equippable.walkspeedmult = TUNING.ALICE_BATTLE_SPEED_MULT
     inst.components.equippable:SetOnEquip(onequip)
     inst.components.equippable:SetOnUnequip(onunequip)
 
@@ -427,8 +428,10 @@ local function maid()
     inst:AddComponent("equippable")
     inst.components.equippable.equipslot = EQUIPSLOTS.BODY
 	inst.components.equippable.dapperness = TUNING.DAPPERNESS_LARGE * 3 --增加回san效果
+    inst.components.equippable.walkspeedmult = TUNING.ALICE_MAID_SPEED_MULT
     inst.components.equippable:SetOnEquip(onequip_maid)
     inst.components.equippable:SetOnUnequip(onunequip_maid)
+    
 
     inst.components.inventoryitem.atlasname = "images/inventoryimages/alice_maidcoat.xml"
     inst.components.inventoryitem.imagename = "alice_maidcoat"
