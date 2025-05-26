@@ -233,12 +233,13 @@ local function fn()
 	inst:AddTag("companion")
 	inst:AddTag("noauradamage")
 	inst:AddTag("notraptrigger")
+    inst:AddTag("ignorewalkableplatformdrowning")
 
     MakeCharacterPhysics(inst, 75, .5)
     inst.Physics:SetCollisionGroup(COLLISION.CHARACTERS)
     inst.Physics:ClearCollisionMask()
-    inst.Physics:CollidesWith(COLLISION.WORLD)
-    inst.Physics:CollidesWith(COLLISION.OBSTACLES)
+    inst.Physics:CollidesWith(COLLISION.GROUND)
+    --inst.Physics:CollidesWith(COLLISION.OBSTACLES)
     inst.Physics:CollidesWith(COLLISION.CHARACTERS)
 
     inst.AnimState:SetBank("jiqiren")
@@ -271,10 +272,11 @@ local function fn()
     inst:AddComponent("locomotor")
     inst.components.locomotor.walkspeed = 8
     inst.components.locomotor.runspeed = 16
-    inst.components.locomotor:SetAllowPlatformHopping(true)
+    inst.components.locomotor.pathcaps = {allowocean = true}
     
     inst:AddComponent("embarker")
     inst:AddComponent("drownable")
+    inst.components.drownable.enabled = false
 
     inst:AddComponent("lootdropper")
 
