@@ -122,7 +122,7 @@ local function PickUpItems(inst, doer, target)
     end
 
     -- 忽略具有 container 组件的物品，以防止数据丢失
-    if target.components.container or target:HasTag("bundle") then
+    if target.components.container or target:HasTag("bundle") or target:HasTag("alice_remote") then
         
         return false
     end
@@ -479,7 +479,7 @@ local function tool_fn()
         end
 
         -- 检查是否可以拾取
-        if target.components.inventoryitem and not target:IsInLimbo() and not target.prefab == "alice_remote" then
+        if target.components.inventoryitem and not target:IsInLimbo() then
             -- print("[Debug] SpellFn: Attempting pickup")
             return PickUpItems(inst, doer, target)
         end
