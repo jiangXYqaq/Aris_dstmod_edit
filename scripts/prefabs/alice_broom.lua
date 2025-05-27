@@ -381,10 +381,12 @@ local function HarvestItems(inst, doer, target)
             harvested_count = harvested_count + 1
 
             -- 产物放入背包或掉落
-            for i = 1, num do
-                local loot = SpawnPrefab(product)
-                if loot and not doer.components.inventory:GiveItem(loot) then
-                    loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+            if product then
+                for i = 1, num do
+                    local loot = SpawnPrefab(product)
+                    if loot and not doer.components.inventory:GiveItem(loot) then
+                        loot.Transform:SetPosition(doer.Transform:GetWorldPosition())
+                    end
                 end
             end
         end
