@@ -96,4 +96,23 @@ configuration_options =
         },
 		default = "ch",
 	},
+	{
+        name = "ALICE_GIFT_KEY",
+        label = en_zh("Gift Key", "礼物快捷键"),
+        hover = en_zh("Set the shortcut key for Alice's gift feature", "设置爱丽丝礼物功能快捷键"),
+        options = key_options,
+        default = "KEY_U",
+    },
+    -- 新增的权重偏好设置
+    {
+        name = "GIFT_WEIGHT_PREFERENCE",
+        label = "礼物类型偏好",
+        options = {
+            {description = "平衡", data = "balanced"},
+            {description = "材料优先", data = "materials"},
+            {description = "装备优先", data = "equipments"},
+            {description = "食物优先", data = "foods"}
+        },
+        default = "balanced"
+    }
 }

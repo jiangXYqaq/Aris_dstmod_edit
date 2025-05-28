@@ -44,6 +44,8 @@ local stringkey = TUNING.LIGHTSWORD_KEY or KEY_E
 local key = _G[stringkey]
 local EX_MODE_KEY = TUNING.EX_MODE_KEY or KEY_R
 local ex_key = _G[EX_MODE_KEY]
+local ALICE_GIFT_KEY = TUNING.ALICE_GIFT_KEY or KEY_U
+local gift_key = _G[ALICE_GIFT_KEY]
 
 --更换武器准星
 AddClientModRPCHandler("alice", "updataaoereticule", function(num)
@@ -158,10 +160,10 @@ end)
 
 AddModRPCHandler("alice", "teleport", function(player, x, z)
     if player and player.Transform then
-        print("[Debug] RPC: Teleporting player to", x, z) -- Debug log
+        --print("[Debug] RPC: Teleporting player to", x, z) -- Debug log
         player.Transform:SetPosition(x, 0, z)
     else
-        print("[Debug] RPC: Failed to teleport player. Invalid player or position.") -- Debug log
+        --print("[Debug] RPC: Failed to teleport player. Invalid player or position.") -- Debug log
     end
 end)
 
@@ -236,3 +238,31 @@ AddClientModRPCHandler("alice", "updatesound", function()
         TheFrontEnd:GetSound():PlaySound("alicesound/alicesound/UI_LevelUp")
     end
 end)
+
+-- 初始化玩家组件
+AddPlayerPostinit(function(inst)
+    if inst == ThePlayer then return end  -- 客户端不需要组件
+    
+    inst:AddComponent("alice_gift")
+    
+    -- 按键处理
+    inst:ListenForEvent("alice_gift_trigger", function()
+        if inst.components.alice_gift:CheckCooldown() then
+            inst.components.alice_gift:GiveGifts()
+            inst.components.alice_gift:UpdateCooldown()
+        end
+    end)
+end)
+
+-- 网络通信处理（保持原有RPC结构）
+AddModRPCHandler("alice_gift", "request_gift", function(player)
+    player:PushEvent("alice_gift_trigger")
+end)
+
+-- 客户端按键触发
+TheInput:AddKeyHandler(function(key, down)
+    if down and key == gift_key then
+        SendModRPC(MOD_RPC["alice_gift"]["request_gift"])
+    end
+end)
+
