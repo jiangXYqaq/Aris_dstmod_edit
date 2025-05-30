@@ -299,8 +299,15 @@ AddComponentPostInit("playercontroller", function(self)
     end
 end)
 
--- GIFT功能
-AddPlayerPostinit(function(inst)
-    inst:ListenForEvent("newstate", OnPlayerActivated)
-    OnPlayerActivated(inst)
-end)
+--[[ -- GIFT功能（服务器端）
+if TheNet and TheNet:GetIsServer() then
+    AddSimPostInit(function()
+        AddPlayerPostInit(function(inst)
+            -- 安全地添加事件监听
+            if inst:IsValid() then
+                inst:ListenForEvent("newstate", OnPlayerActivated)
+                OnPlayerActivated(inst)
+            end
+        end)
+    end)
+end ]]

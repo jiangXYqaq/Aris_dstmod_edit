@@ -239,30 +239,47 @@ AddClientModRPCHandler("alice", "updatesound", function()
     end
 end)
 
--- 初始化玩家组件
-AddPlayerPostinit(function(inst)
-    if inst == ThePlayer then return end  -- 客户端不需要组件
-    
-    inst:AddComponent("alice_gift")
-    
-    -- 按键处理
-    inst:ListenForEvent("alice_gift_trigger", function()
-        if inst.components.alice_gift:CheckCooldown() then
-            inst.components.alice_gift:GiveGifts()
-            inst.components.alice_gift:UpdateCooldown()
-        end
+-- 只在服务器端执行组件初始化
+if TheNet and TheNet:GetIsServer() then
+    -- 延迟到世界准备好
+    AddSimPostInit(function()
+        -- 初始化玩家组件
+        AddPlayerPostInit(function(inst)
+            -- 确保不是客户端控制的玩家实体
+            if inst ~= ThePlayer then
+                if not inst.components.alice_gift then
+                    inst:AddComponent("alice_gift")
+                end
+                
+                -- 按键处理事件监听
+                inst:ListenForEvent("alice_gift_trigger", function()
+                    if inst.components.alice_gift and inst.components.alice_gift:CheckCooldown() then
+                        inst.components.alice_gift:GiveGifts()
+                        inst.components.alice_gift:UpdateCooldown()
+                    end
+                end)
+            end
+        end)
     end)
-end)
+end
+
+-- 客户端按键处理（独立环境检测）
+if TheNet and not TheNet:GetIsServer() then
+    -- 延迟到世界准备好
+    AddSimPostInit(function()
+        TheInput:AddKeyHandler(function(key, down)
+            if down and key == gift_key then
+                --print("[客户端] 按下礼物键")
+                SendModRPCToServer(MOD_RPC["alice_gift"]["request_gift"])
+            end
+        end)
+    end)
+end
 
 -- 网络通信处理（保持原有RPC结构）
 AddModRPCHandler("alice_gift", "request_gift", function(player)
-    player:PushEvent("alice_gift_trigger")
-end)
-
--- 客户端按键触发
-TheInput:AddKeyHandler(function(key, down)
-    if down and key == gift_key then
-        SendModRPC(MOD_RPC["alice_gift"]["request_gift"])
+    --print("[服务器] 收到礼物请求", player)
+    if player and player:IsValid() then
+        player:PushEvent("alice_gift_trigger")
     end
 end)
-

@@ -153,10 +153,76 @@ local GIFT_ITEMS = {
 local AliceGift = Class(function(self, inst)
     self.inst = inst
     self.cooldown_data = {
-        last_day = -1,
-        in_cave = false
+        last_world_day = -1,
+        world_id = nil
     }
+    
+    -- 调用初始化方法
+    self:Initialize()  -- 确保权重初始化
+
+    -- 在服务器端注册事件监听
+    if TheNet and TheNet:GetIsServer() then
+        -- 确保在玩家激活时初始化
+        self.inst:ListenForEvent("ms_playeractivated", function()
+            self:InitializeWorldData()
+        end)
+
+        self.inst:ListenForEvent("alice_gift_trigger", function()
+            if self:CheckCooldown() then
+                self:GiveGifts()
+                self:UpdateCooldown()
+             else
+                local current_day = self:GetCurrentWorldDay()
+                local days_left = self.cooldown_data.last_day - current_day + 1
+                if self.inst.components.talker then
+                    self.inst.components.talker:Say(string.format(
+                        "礼物冷却中！还需%d天", math.max(0, days_left)
+                    ))
+                end
+            end
+        end)
+    end
 end)
+
+-- 初始化世界数据
+function AliceGift:InitializeWorldData()
+    if self.cooldown_data.world_id == nil then
+        self.cooldown_data.world_id = self:GetWorldID()
+        self.cooldown_data.last_day = self:GetCurrentWorldDay() - 1
+        -- print("[AliceGift] 初始化世界数据: ", 
+        --       self.cooldown_data.world_id, 
+        --       self.cooldown_data.last_day)
+    end
+end
+
+-- 获取当前世界的天数
+function AliceGift:GetCurrentWorldDay()
+    -- 优先使用cycles组件
+    if TheWorld.components.cycles then
+        return TheWorld.components.cycles:GetCycles()
+    end
+    
+    -- 使用全局状态作为备用
+    if TheWorld.state and TheWorld.state.cycles then
+        return TheWorld.state.cycles
+    end
+    
+    return 0
+end
+
+-- 获取世界唯一ID
+function AliceGift:GetWorldID()
+    -- 尝试多种方式获取唯一ID
+    if TheWorld.meta and TheWorld.meta.session_identifier then
+        return TheWorld.meta.session_identifier
+    elseif TheWorld.ismastersim and TheWorld.shard then
+        return tostring(TheWorld.shard:GetShardId())
+    elseif TheWorld.GUID then
+        return tostring(TheWorld.GUID)
+    end
+    
+    return "default_world"
+end
 
 -- 在组件初始化时设置权重偏好
 function AliceGift:Initialize()
@@ -168,7 +234,7 @@ function AliceGift:Initialize()
     }
     
     -- 读取偏好设置
-    local preference = GetModConfigData("GIFT_WEIGHT_PREFERENCE") or "balanced"
+    local preference = TUNING.GIFT_WEIGHT_PREFERENCE or "balanced"
     
     -- 根据偏好调整权重
     if preference == "materials" then
@@ -223,38 +289,100 @@ function AliceGift:GetRandomItem(category)
     for _, item in ipairs(items) do
         total_weight = total_weight + item.weight
     end
+    -- print("[DEBUG:Alice Gift] Total weight calculated:", total_weight)
 
     -- 生成随机数
     local rand = math.random(total_weight)
+    -- print("[DEBUG:Alice Gift] Random number generated:", rand)
     local accumulated = 0
 
     -- 轮盘赌算法
     for _, item in ipairs(items) do
         accumulated = accumulated + item.weight
+        -- print("[DEBUG:Alice Gift] Accumulated weight:", accumulated, "Current item:", item.prefab)
         if rand <= accumulated then
+            -- print("[DEBUG:Alice Gift] Selected item:", item.prefab)
             return item
         end
     end
+    -- print("[DEBUG:Alice Gift] No item selected")
     -- 原有权重随机逻辑...
 end
 
--- 冷却检查（组件方法）
+-- 冷却检查
 function AliceGift:CheckCooldown()
-    local current_day = self:GetCurrentDay()
-    return current_day > self.cooldown_data.last_day or
-           self.cooldown_data.in_cave ~= self.inst:IsInCave()
+    -- 确保世界数据已初始化
+    self:InitializeWorldData()
+    
+    local current_world_id = self:GetWorldID()
+    local current_day = self:GetCurrentWorldDay()
+    
+    -- 调试输出
+    print(string.format(
+        "[AliceGift] 冷却检查: 世界=%s, 当前天数=%d, 上次天数=%d, 上次世界=%s",
+        current_world_id, current_day,
+        self.cooldown_data.last_day,
+        self.cooldown_data.world_id
+    ))
+    
+    -- 如果是新世界，允许领取
+    if self.cooldown_data.world_id ~= current_world_id then
+        -- print("[AliceGift] 检测到新世界，允许领取")
+        return true
+    end
+    
+    -- 检查是否是新的一天
+    return current_day > self.cooldown_data.last_day
 end
 
 -- 更新冷却状态
 function AliceGift:UpdateCooldown()
-    self.cooldown_data.last_day = self:GetCurrentDay()
-    self.cooldown_data.in_cave = self.inst:IsInCave()
+    self.cooldown_data.last_day = self:GetCurrentWorldDay()
+    self.cooldown_data.world_id = self:GetWorldID()
+    
+    print(string.format(
+        "[AliceGift] 冷却更新: 世界=%s, 天数=%d",
+        self.cooldown_data.world_id,
+        self.cooldown_data.last_day
+    ))
 end
+
+-- 保存/加载
+function AliceGift:OnSave()
+    return {
+        cooldown_data = self.cooldown_data
+    }
+end
+
+function AliceGift:OnLoad(data)
+    if data and data.cooldown_data then
+        self.cooldown_data = data.cooldown_data
+        -- print("[AliceGift] 加载冷却数据: ", 
+        --       self.cooldown_data.world_id, 
+        --       self.cooldown_data.last_day)
+    end
+
+     -- 确保权重已初始化（存档加载后）
+    if not self.category_weights then
+        -- print("[AliceGift] 存档加载后重新初始化权重")
+        self:Initialize()
+    end
+    
+    -- 确保在加载后初始化世界数据
+    TheWorld:DoTaskInTime(0, function()
+        self:InitializeWorldData()
+    end)
+end
+
 
 -- 物品发放（组件方法）
 function AliceGift:GiveGifts()
-    if self.inst.name ~= "alice" then return end
-    
+    -- 确保玩家实体有效
+    if not self.inst:IsValid() or self.inst.prefab ~= "alice" then 
+        -- print("[AliceGift] 玩家不是Alice，跳过")
+        return 
+    end
+    -- print("[AliceGift] 开始发放礼物")
     local gifts = {}
     local gift_count = GIFTS_PER_USE  -- 固定3个礼物
     for i = 1, gift_count do
@@ -277,8 +405,8 @@ function AliceGift:GiveGifts()
                 
                 -- 尝试放入背包
                 local success = false
-                if player.components.inventory then
-                    success = player.components.inventory:GiveItem(item_inst, nil, player:GetPosition())
+                if self.inst.components.inventory then
+                    success = self.inst.components.inventory:GiveItem(item_inst, nil, self.inst:GetPosition())
                 end
                 
                 -- 记录结果
@@ -291,12 +419,12 @@ function AliceGift:GiveGifts()
 
                 -- 背包满时安全掉落
                 if not success then
-                    player:DropItem(item_inst)
+                    self.inst:DropItem(item_inst)
                 end
 
             else
                 -- 生成失败时记录日志（可选）
-                print("[DEBUG:Alice Gift] 无法生成物品:", item.prefab)
+                -- print("[DEBUG:Alice Gift] 无法生成物品:", item.prefab)
             end
         end
     end
@@ -312,13 +440,13 @@ function AliceGift:GiveGifts()
             )
         end
         
-        if player.components.talker then
-            player.components.talker:Say(message)
+        if self.inst.components.talker then
+            self.inst.components.talker:Say(message)
         end
         
         -- 固定简单公告
         if TheNet:GetIsServer() then
-            TheNet:Announce(string.format("%s 开启了每日礼物！", player.name))
+            TheNet:Announce(string.format("%s 开启了每日礼物！", self.inst.name))
         end
     end
 end
