@@ -318,12 +318,12 @@ function AliceGift:CheckCooldown()
     local current_day = self:GetCurrentWorldDay()
     
     -- 调试输出
-    print(string.format(
-        "[AliceGift] 冷却检查: 世界=%s, 当前天数=%d, 上次天数=%d, 上次世界=%s",
-        current_world_id, current_day,
-        self.cooldown_data.last_day,
-        self.cooldown_data.world_id
-    ))
+    -- print(string.format(
+    --     "[AliceGift] 冷却检查: 世界=%s, 当前天数=%d, 上次天数=%d, 上次世界=%s",
+    --     current_world_id, current_day,
+    --     self.cooldown_data.last_day,
+    --     self.cooldown_data.world_id
+    -- ))
     
     -- 如果是新世界，允许领取
     if self.cooldown_data.world_id ~= current_world_id then
@@ -340,11 +340,11 @@ function AliceGift:UpdateCooldown()
     self.cooldown_data.last_day = self:GetCurrentWorldDay()
     self.cooldown_data.world_id = self:GetWorldID()
     
-    print(string.format(
-        "[AliceGift] 冷却更新: 世界=%s, 天数=%d",
-        self.cooldown_data.world_id,
-        self.cooldown_data.last_day
-    ))
+    -- print(string.format(
+    --     "[AliceGift] 冷却更新: 世界=%s, 天数=%d",
+    --     self.cooldown_data.world_id,
+    --     self.cooldown_data.last_day
+    -- ))
 end
 
 -- 保存/加载
@@ -379,7 +379,7 @@ end
 function AliceGift:GiveGifts()
     -- 确保玩家实体有效
     if not self.inst:IsValid() or self.inst.prefab ~= "alice" then 
-        -- print("[AliceGift] 玩家不是Alice，跳过")
+        --print("[AliceGift] 玩家不是Alice，跳过")
         return 
     end
     -- print("[AliceGift] 开始发放礼物")

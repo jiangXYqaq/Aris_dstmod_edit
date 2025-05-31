@@ -239,7 +239,6 @@ AddClientModRPCHandler("alice", "updatesound", function()
     end
 end)
 
--- 只在服务器端执行组件初始化
 if TheNet and TheNet:GetIsServer() then
     -- 延迟到世界准备好
     AddSimPostInit(function()
@@ -263,23 +262,23 @@ if TheNet and TheNet:GetIsServer() then
     end)
 end
 
--- 客户端按键处理（独立环境检测）
-if TheNet and not TheNet:GetIsServer() then
-    -- 延迟到世界准备好
-    AddSimPostInit(function()
-        TheInput:AddKeyHandler(function(key, down)
+-- 客户端按键处理（简化版）
+local key_handler_added = false
+
+AddClassPostConstruct("widgets/controls", function(self)
+    -- Ensure the key handler is added only once
+    if not key_handler_added and self.owner == ThePlayer and gift_key then
+        self.gift_key_handler = TheInput:AddKeyHandler(function(key, down)
             if down and key == gift_key then
-                --print("[客户端] 按下礼物键")
                 SendModRPCToServer(MOD_RPC["alice_gift"]["request_gift"])
             end
         end)
-    end)
-end
+        key_handler_added = true
+    end
+end)
 
--- 网络通信处理（保持原有RPC结构）
 AddModRPCHandler("alice_gift", "request_gift", function(player)
-    --print("[服务器] 收到礼物请求", player)
-    if player and player:IsValid() then
+    if player and player:IsValid() and player.components.alice_gift then
         player:PushEvent("alice_gift_trigger")
     end
 end)
