@@ -159,6 +159,7 @@ local function PickUpItems(inst, doer, target)
             and item.components.inventoryitem.canbepickedup 
             and not item:IsInLimbo() 
             and not item.components.container -- 忽略容器物品
+            and not item.prefab == "bullkelp_beachedroot" -- 忽略自身
         then
             local stack_size = 1
             if item.components.stackable then
