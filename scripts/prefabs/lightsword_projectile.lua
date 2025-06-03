@@ -64,6 +64,10 @@ local function LaunchSound(inst)
 end
 
 local function OnHit(inst, attacker, target)
+    inst:AddComponent("explosive")
+    inst.components.explosive.explosiverange = TUNING.ALICE_SHOT2_SPLASH_RADIUS
+    inst.components.explosive.explosivedamage = 0
+    inst.components.explosive.lightonexplode = false
     if not (attacker or attacker.components.combat) then
         return
     end
@@ -157,6 +161,8 @@ local function OnHit(inst, attacker, target)
             affected_entity:DoSplash()
         elseif affected_entity.components.workable then -- 破坏建筑
             affected_entity.components.workable:Destroy(inst)
+        elseif affected_entity.components.workable and affected_entity.components.workable:RequiresToughWork() then
+            inst.components.explosive:OnBurnt()
         end
     end
 
@@ -252,6 +258,8 @@ end
 local function cannonball_maseter(inst)
     inst.persists = false
 
+    inst:AddTag("toughworker")
+	inst:AddTag("explosive")
     inst:AddComponent("complexprojectile")
 
     inst.components.complexprojectile:SetHorizontalSpeed(25) --水平速度
