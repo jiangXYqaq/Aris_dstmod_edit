@@ -194,10 +194,10 @@ AddCharacterRecipe("composite_shield",
 -- 针刺防护板
 AddCharacterRecipe("thorn_shield",
     {
-        Ingredient("livinglog", 2),
-        Ingredient("stinger", 4),
+        Ingredient("transistor", 1),
+        Ingredient("stinger", 2),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
     },
