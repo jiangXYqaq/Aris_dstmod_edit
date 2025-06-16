@@ -236,8 +236,14 @@ local function onsanitydelta(inst, data)
     local newskin = ""
     if data.newpercent > 0.5 then
         newskin = inst.is_maid and "alice_maid" or "alice"
+        if inst.components.grue ~= nil then
+			inst.components.grue:RemoveImmunity("alice_red")
+		end
     else
         newskin = inst.is_maid and "alice_maid_red" or "alice_red"
+        if inst.components.grue ~= nil then
+			inst.components.grue:AddImmunity("alice_red")
+		end
     end
     --print(oldskin, newskin)
     if oldskin ~= newskin then
