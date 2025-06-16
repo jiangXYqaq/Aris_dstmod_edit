@@ -216,16 +216,16 @@ AddCharacterRecipe("shadow_shield",
     {"MODS", "WEAPONS"}
 )
 
-AddCharacterRecipe("wx78module_alc_charge",
-    {
-        Ingredient("nightmarefuel", 4),
-    },
-    TECH.LOST,
-    {
-        builder_tag = "alice",
-    },
-    {"MODS", "WEAPONS"}
-)
+--[[ AddCharacterRecipe("wx78module_alc_charge",
+{
+    Ingredient("nightmarefuel", 4),
+},
+TECH.LOST,
+{
+    builder_tag = "alice",
+},
+{"MODS", "WEAPONS"}
+) ]]
 
 -- 充能电路
 AddCharacterRecipe("wx78module_alc_charge",
@@ -282,7 +282,7 @@ AddCharacterRecipe("alice_remote",
         Ingredient("wagpunk_bits", 1),
         Ingredient("transistor", 4),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
         atlas = "images/inventoryimages/alice_remote.xml",
