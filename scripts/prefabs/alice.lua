@@ -649,7 +649,6 @@ local function common_postinit(inst) --客机函数
     inst.CanUpgradeWithModule = CLIENT_CanUpgradeWithModule
     inst.CanRemoveModules = CLIENT_CanRemoveModules
 end
-
 ----------------战斗分析模块----------------
 local function UpdateBuffAnim(inst)
     if inst.bufffx == nil then
@@ -728,88 +727,6 @@ local function OnTimerFinished(inst, data)
         do_steam_fx(inst)
     end
 end
---[[ --NEED TO FILL THIS
-local GIFT_TABLE= {
-    GIFT_SPECIAL = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_FIRST = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_SECOND = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_THIRD = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    }
-}
-local GIFT_PROBABILITY = {
-    SPECIAL = 1/70,
-    FIRST = 7/70,
-    SECOND = 22/70,
-    THIRD = 40/70
-}
-
--- 加权随机算法
-local function GetWeightedRandomReward(pool)
-    local total = 0
-    for _,v in ipairs(pool) do total = total + v.weight end
-    local rnd = math.random(total)
-    for _,v in ipairs(pool) do
-        if rnd <= v.weight then return v end
-        rnd = rnd - v.weight
-    end
-end
-
--- 物品发放逻辑
-local function SpawnRewards(inst, rewards)
-    local pos = inst:GetPosition()
-    for _, itemData in ipairs(rewards) do
-        local item = SpawnPrefab(itemData[1])
-        if item then
-            -- 优先放入背包
-            if inst.components.inventory and itemData[2] then
-                item.components.stackable:SetStackSize(itemData[2])
-                inst.components.inventory:GiveItem(item)
-            else
-                item.Transform:SetPosition(pos:Get())
-            end
-        end
-    end
-    -- 播放特效 邦邦卡邦
-    --SpawnPrefab("statue_transition_2").Transform:SetPosition(pos:Get())
-end
-
-local function GiveDailyGift(inst)
-    if not inst.components.health:IsDead() and inst:HasTag("alice") then
-        local rand = math.random()
-        local rewardPool
-        if rand < GIFT_PROBABILITY.SPECIAL then
-            rewardPool = GIFT_TABLE.GIFT_SPECIAL
-        elseif rand < GIFT_PROBABILITY.FIRST then
-            rewardPool = GIFT_TABLE.GIFT_FIRST
-        elseif rand < GIFT_PROBABILITY.SECOND then
-            rewardPool = GIFT_TABLE.GIFT_SECOND
-        else
-            rewardPool = GIFT_TABLE.GIFT_THIRD
-        end
-        local selected = GetWeightedRandomReward(rewardPool)
-        if selected then
-            SpawnRewards(inst, selected.prefabs)
-        end
-    end
-end
-
---每日检查（游戏时间每天触发）
-local function OnNewDay(inst)
-    inst:DoTaskInTime(0.5, function() 
-        GiveDailyGift(inst) 
-    end)
-end ]]
 
 ----------------主机函数----------------
 local function master_postinit(inst)
@@ -934,9 +851,6 @@ local function master_postinit(inst)
     inst:ListenForEvent("onhitother", AttackOrAttacked)
     inst:ListenForEvent("attacked", AttackOrAttacked)
     inst:ListenForEvent("lightswordshot", AttackOrAttacked)
-
-    --for_daily_gift
-    --inst:WatchWorldState("cycles", OnNewDay)
 
     inst.components.playerlightningtarget:SetHitChance(TUNING.WX78_LIGHTNING_TARGET_CHANCE)
     inst.components.playerlightningtarget:SetOnStrikeFn(OnLightningStrike)
