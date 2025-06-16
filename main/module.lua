@@ -52,12 +52,38 @@ local function maxsanity_change(inst, wx, amount, isloading)
 end
 
 local function magic_tick(wx)
-    if wx.components.health and not wx.components.health:IsDead() then
+    if wx.components.health then
         wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
     end
     
-    if wx.components.sanity and not wx.components.sanity:IsDead() then
+    if wx.components.sanity then
         wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
+    end
+end
+
+-- 温度舒适范围常量
+local COMFORT_MIN_TEMP = 5
+local COMFORT_MAX_TEMP = 65
+
+-- 记录原始温度范围的函数
+local function record_original_temps(wx)
+    if not wx._original_temp_min then
+        wx._original_temp_min = wx.components.temperature.mintemp
+    end
+    if not wx._original_temp_max then
+        wx._original_temp_max = wx.components.temperature.maxtemp
+    end
+end
+
+-- 恢复原始温度范围的函数
+local function restore_original_temps(wx)
+    if wx._original_temp_min then
+        wx.components.temperature.mintemp = wx._original_temp_min
+        wx._original_temp_min = nil
+    end
+    if wx._original_temp_max then
+        wx.components.temperature.maxtemp = wx._original_temp_max
+        wx._original_temp_max = nil
     end
 end
 
@@ -82,7 +108,20 @@ local function magic_activate(inst, wx)
     if not wx._magic_tick_task then
         wx._magic_tick_task = wx:DoPeriodicTask(TUNING.MAGIC_REGEN_INTERVAL, magic_tick, nil, wx)
     end
+
+     -- 温度限制 - 仅在组件存在时执行
+     if wx.components.temperature then
+        -- 记录原始温度范围
+        record_original_temps(wx)
+        
+        -- 设置舒适温度范围
+        wx.components.temperature.mintemp = COMFORT_MIN_TEMP
+        wx.components.temperature.maxtemp = COMFORT_MAX_TEMP
+        
+    end
 end
+
+
 
 local function magic_deactivate(inst, wx)
     if wx.alc_baojilv then
@@ -105,6 +144,11 @@ local function magic_deactivate(inst, wx)
     if wx._magic_tick_task then
         wx._magic_tick_task:Cancel()
         wx._magic_tick_task = nil
+    end
+
+    -- 恢复原始温度范围
+    if wx.components.temperature then
+        restore_original_temps(wx)
     end
 end
 
