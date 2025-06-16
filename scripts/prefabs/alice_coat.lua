@@ -10,7 +10,7 @@ local assets=
 
 local prefabs = {}
 
-local SHIELD_DURATION = 10 * FRAMES
+local SHIELD_DURATION = 25 * FRAMES --max 30
 local SHIELD_VARIATIONS = 3
 local MAIN_SHIELD_CD = 1.2
 
@@ -74,10 +74,10 @@ local function OnResistDamage(inst)--, damage)
     inst.task = inst:DoTaskInTime(SHIELD_DURATION, OnShieldOver, OnResistDamage)
     inst.components.resistance:SetOnResistDamageFn(nil)
 
-    local slotitem = inst.components.container:GetItemInSlot(1)
-    if slotitem then
+    --local slotitem = inst.components.container:GetItemInSlot(1)
+    --[[ if slotitem then
         slotitem.components.finiteuses:Use(1)
-    end
+    end ]]
         
     if inst.components.cooldown.onchargedfn ~= nil then
         inst.components.cooldown:StartCharging()
@@ -262,7 +262,8 @@ local function OnShieldLoaded(inst, data)
             inst.shield = true
             inst.components.cooldown.onchargedfn = OnChargedFn
             inst.lastmainshield = 0
-            inst.components.cooldown:StartCharging(math.max(TUNING.ARMOR_SKELETON_FIRST_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
+            --inst.components.cooldown:StartCharging(math.max(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
+            inst.components.cooldown:StartCharging(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN)
         end
 
         if data.item.prefab == "dread_shield" then
@@ -365,7 +366,8 @@ local function common()
     inst.components.resistance:SetOnResistDamageFn(OnResistDamage)
     
     inst:AddComponent("cooldown")
-    inst.components.cooldown.cooldown_duration = TUNING.ARMOR_SKELETON_COOLDOWN
+    inst.components.cooldown.cooldown_duration = TUNING.ALICE_SHADOW_SHIELD_COOLDOWN
+    --print("[DEBUG]Cooldown duration:", inst.components.cooldown.cooldown_duration)
 
     inst:AddComponent("armor")
     inst.components.armor:InitIndestructible(0)
