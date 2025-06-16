@@ -11,7 +11,7 @@ AddPrefabPostInit("beequeen", function(inst)
     if not TheWorld.ismastersim then
         return
     end
-    AddRandomDrop(inst, "thorn_shield_blueprint", 1)
+    --AddRandomDrop(inst, "thorn_shield_blueprint", 1)
     AddRandomDrop(inst, "giftwrap_blueprint", 1)
 end)
 --新增犀牛掉落蓝图，猴子女王还是可以掉落。
@@ -51,9 +51,9 @@ AddPrefabPostInit("stalker_atrium", function(inst)
     end)
 end)
 
-AddPrefabPostInit("dragonfly", function(inst)
+--[[ AddPrefabPostInit("dragonfly", function(inst)
     if not TheWorld.ismastersim then
         return
     end
     AddRandomDrop(inst, "alice_remote_blueprint", 1)
-end)
+end) ]]
