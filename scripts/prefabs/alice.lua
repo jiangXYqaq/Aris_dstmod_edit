@@ -806,6 +806,10 @@ local function master_postinit(inst)
     --自定义的组件，在装备暗影防护板对抗天体阵营时生效
     inst:AddComponent("AliceShadowEmbrace")
 
+    -- 移除滑倒组件，防止在任何冰面上滑倒
+    if inst.components.slipperyfeet then
+        inst:RemoveComponent("slipperyfeet")
+    end
     -- 睡觉时光环熄灭
     local oldDoSleep = inst.components.sleepingbaguser.DoSleep
     inst.components.sleepingbaguser.DoSleep = function(self, ...)
@@ -860,10 +864,6 @@ local function master_postinit(inst)
     inst:ListenForEvent("onhitother", AttackOrAttacked)
     inst:ListenForEvent("attacked", AttackOrAttacked)
     inst:ListenForEvent("lightswordshot", AttackOrAttacked)
-
-    --[[ inst:ListenForEvent("sanitymodechanged", function(inst)
-        inst.components.AliceShadowEmbrace:CheckSanityMode()
-    end) ]]
 
     inst.components.playerlightningtarget:SetHitChance(TUNING.WX78_LIGHTNING_TARGET_CHANCE)
     inst.components.playerlightningtarget:SetOnStrikeFn(OnLightningStrike)
