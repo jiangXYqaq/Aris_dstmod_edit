@@ -36,7 +36,7 @@ AddPrefabPostInit("minotaur", function(inst)
     end)
 end)
 
-AddPrefabPostInit("stalker_atrium", function(inst)
+--[[ AddPrefabPostInit("stalker_atrium", function(inst)
     if not TheWorld.ismastersim then
         return
     end
@@ -49,7 +49,7 @@ AddPrefabPostInit("stalker_atrium", function(inst)
             lootdropper:AddChanceLoot("shadow_shield_blueprint", 1)
         end
     end)
-end)
+end) ]]
 
 --[[ AddPrefabPostInit("dragonfly", function(inst)
     if not TheWorld.ismastersim then

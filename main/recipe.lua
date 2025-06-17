@@ -208,8 +208,9 @@ AddCharacterRecipe("thorn_shield",
 AddCharacterRecipe("shadow_shield",
     {
         Ingredient("nightmarefuel", 12),
+        Ingredient("skeletonhat", 1),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
     },
