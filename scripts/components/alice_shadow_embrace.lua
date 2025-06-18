@@ -23,12 +23,9 @@ local AliceShadowEmbrace = Class(function(self, inst)
      -- 影之支配相关字段
     self.shadow_dominance = false
     self.induced_insanity = false
-
-    print("[AliceShadowEmbrace] Component initialized for:", inst)
 end)
 
 function AliceShadowEmbrace:OnRemoveFromEntity()
-    print("[AliceShadowEmbrace] OnRemoveFromEntity called")
     self:RemoveListeners()
     -- 清理所有计时器
     if self.quick_swap_timer then
@@ -43,7 +40,6 @@ end
 
 -- 统一移除所有监听器
 function AliceShadowEmbrace:RemoveListeners()
-    print("[AliceShadowEmbrace] Removing all listeners")
     if self.coat_listener then
         self.inst:RemoveEventCallback("equip", self.coat_listener)
         self.inst:RemoveEventCallback("unequip", self.coat_listener)
@@ -64,34 +60,28 @@ end
 
 -- 核心状态检查函数
 function AliceShadowEmbrace:CheckConditions()
-    print("[AliceShadowEmbrace] Checking conditions")
     -- 获取当前装备的alice_coat
     local coat = self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
     
     -- 检查是否装备了alice_coat且内部有暗影防护板
     if coat and coat:HasTag("alice_coat") then
-        print("[AliceShadowEmbrace] Alice coat equipped")
         local container = coat.components.container
         if container then
             for slot = 1, container:GetNumSlots() do
                 local item = container:GetItemInSlot(slot)
                 if item and item.prefab == "shadow_shield" then
-                    print("[AliceShadowEmbrace] Shadow shield found in slot:", slot)
                     return true
                 end
             end
         end
     end
-    print("[AliceShadowEmbrace] Conditions not met")
     return false
 end
 
 -- 核心状态更新
 function AliceShadowEmbrace:UpdateState()
-    print("[AliceShadowEmbrace] Updating state")
     -- 手动激活期间忽略理智检查
     if self.manual_active then
-        print("Manual active - forcing activation")
         if not self.active then
             self:Activate()
         end
@@ -104,18 +94,14 @@ function AliceShadowEmbrace:UpdateState()
                         self.inst.components.sanity:GetSanityMode() == SANITY_MODE_LUNACY
     
     if shouldActive then
-        print("[AliceShadowEmbrace] Activating")
         self:Activate()
     else
-        print("[AliceShadowEmbrace] Deactivating")
         self:Deactivate()
     end
 end
 
 -- 修改手动激活函数 - 直接激活效果
 function AliceShadowEmbrace:TriggerManualActivate()
-    print("[TriggerManualActivate] Starting manual activation")
-    
     -- 清除快速更换计时器
     if self.quick_swap_timer then
         self.quick_swap_timer:Cancel()
@@ -125,35 +111,27 @@ function AliceShadowEmbrace:TriggerManualActivate()
     
     -- 设置手动激活状态
     self.manual_active = true
-    print("Manual active set to true")
     
     -- 刷新或启动60秒计时器
     if self.manual_timer then
-        print("Canceling existing manual timer")
         self.manual_timer:Cancel()
     end
     
-    print("Starting 60-second timer")
     self.manual_timer = self.inst:DoTaskInTime(60, function()
-        print("Manual activation period ended")
         self.manual_active = false
         self:UpdateState()  -- 回退到被动检查
     end)
     
     -- 直接激活效果，不通过UpdateState
     self:Activate()
-    
-    print("Manual activation complete")
 end
 
 -- 初始化装备监听
 function AliceShadowEmbrace:SetupListeners()
-    print("[AliceShadowEmbrace] Setting up listeners")
     self:RemoveListeners()
     
     -- 装备/卸下监听
     self.coat_listener = function(inst, data)
-        print("[AliceShadowEmbrace] Coat listener triggered:", data.item and data.item.prefab)
         if data.item and data.item:HasTag("alice_coat") then
             self:UpdateState()
         end
@@ -163,35 +141,25 @@ function AliceShadowEmbrace:SetupListeners()
     
     -- 监听自定义防护板事件
     self.shield_loaded_listener = function(inst, data)
-        print("[AliceShadowEmbrace] Shield loaded listener triggered")
-        print("Data contents:", data) -- Debug information
         if data.item and data.item.prefab == "shadow_shield" then
-            print("Shadow shield loaded into alice_coat")
             
             -- 检查是否在5秒内重新装备
             if self.last_plate_remove_time then
                 local time_diff = GetTime() - self.last_plate_remove_time
-                print(string.format("Time since removal: %.2f seconds", time_diff))
                 
                 if time_diff <= 5 then
-                    print("Quick swap detected - triggering manual activation")
                     self:TriggerManualActivate()
                 else
-                    print("Normal equipment - updating state")
                     self:UpdateState()
                 end
             else
-                print("No previous removal time - updating state")
                 self:UpdateState()
             end
         end
     end
     
     self.shield_unloaded_listener = function(inst, data)
-        print("[AliceShadowEmbrace] Shield unloaded listener triggered")
-        print("Data contents:", data) -- Debug information
         if data.prefab and data.prefab == "shadow_shield" then
-            print("Shadow shield unloaded from alice_coat")
             
             self.last_plate_remove_time = GetTime()
             
@@ -200,7 +168,6 @@ function AliceShadowEmbrace:SetupListeners()
                 self.quick_swap_timer:Cancel()
             end
             self.quick_swap_timer = self.inst:DoTaskInTime(5, function()
-                print("Quick swap window expired")
                 self.last_plate_remove_time = nil
                 self.quick_swap_timer = nil
             end)
@@ -214,7 +181,6 @@ function AliceShadowEmbrace:SetupListeners()
     
     -- 理智模式监听
     self.sanity_listener = function(inst)
-        print("[AliceShadowEmbrace] Sanity mode changed")
         self:UpdateState()
     end
     self.inst:ListenForEvent("sanitymodechanged", self.sanity_listener)
@@ -225,7 +191,6 @@ end
 
 -- 新增：添加影之支配效果
 function AliceShadowEmbrace:ApplyShadowDominance()
-    print("[AliceShadowEmbrace] Applying shadow dominance")
     if self.shadow_dominance then
         return  -- 效果已存在
     end
@@ -260,13 +225,10 @@ function AliceShadowEmbrace:RemoveShadowDominance()
         self.inst.components.sanity:SetInducedInsanity(self.inst, false)
         self.induced_insanity = false
     end
-    
-    print("[AliceShadowEmbrace] Shadow dominance removed")
 end
 
 -- 在ApplyImmunityEffects中添加防冰冻实现
 function AliceShadowEmbrace:ApplyImmunityEffects()
-    print("[AliceShadowEmbrace] Applying immunity effects")
     if self.immunity_applied then
         return
     end
@@ -341,7 +303,6 @@ end
 
 -- 在RemoveImmunityEffects中恢复原始行为
 function AliceShadowEmbrace:RemoveImmunityEffects()
-    print("[AliceShadowEmbrace] Removing immunity effects")
     if not self.immunity_applied then
         return
     end
@@ -405,9 +366,7 @@ end
 
 function AliceShadowEmbrace:Activate()
     -- 手动激活期间总是允许激活
-    print("manual_active:", self.manual_active, "active:", self.active)
     if self.manual_active and not self.active then
-        print("Manual activation - activating effects")
         self.active = true
         
         -- 统一应用影之支配效果（不再区分主动/被动）
@@ -426,7 +385,6 @@ function AliceShadowEmbrace:Activate()
 
     -- 非手动激活的正常检查
     if not self.active then
-        print("Manual activation - activating effects")
         self.active = true
         
         -- 统一应用影之支配效果（不再区分主动/被动）
@@ -449,12 +407,10 @@ end
 function AliceShadowEmbrace:Deactivate()
     -- 手动激活期间不执行停用
     if self.manual_active then
-        print("Manual active - skipping deactivation")
         return
     end
 
     if self.active then
-        print("[AliceShadowEmbrace] Deactivating effects")
         self.active = false
         
         -- 统一移除影之支配效果

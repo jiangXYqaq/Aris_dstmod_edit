@@ -73,6 +73,8 @@ local GIFT_ITEMS = {
         {prefab = "alterguardianhatshard", count = {min = 1, max = 1}, weight = 5}, -- 启迪碎片
         {prefab = "eyeturret_item", count = {min = 1, max = 1}, weight = 5}, -- 眼睛炮塔
         {prefab = "shadowheart", count = {min = 1, max = 1}, weight = 10}, -- 暗影心房
+        
+        
     },
 
     equipments = {
@@ -97,6 +99,7 @@ local GIFT_ITEMS = {
         {prefab = "armorskeleton", count = {min = 1, max = 1}, weight = 1}, -- 骨头盔甲
         {prefab = "skeletonhat", count = {min = 1, max = 1}, weight = 1}, -- 骨头头盔
         {prefab = "alterguardianhat", count = {min = 1, max = 1}, weight = 1}, -- 启迪之冠
+        {prefab = "lunar_seed", count = {min = 5, max = 20}, weight = 1}, -- 天体珠宝
         {prefab = "security_pulse_cage", count = {min = 1, max = 1}, weight = 1}, -- 火花柜
         {prefab = "security_pulse_cage_full", count = {min = 1, max = 1}, weight = 1}, -- 充能火花柜
         {prefab = "voidcloth_boomerang", count = {min = 1, max = 1}, weight = 1}, -- 阴郁回旋镖
@@ -157,6 +160,9 @@ local AliceGift = Class(function(self, inst)
         world_id = nil
     }
     
+    -- 新增：已获取的权重1装备记录
+    self.obtained_weight1_equipments = {}
+
     -- 调用初始化方法
     self:Initialize()  -- 确保权重初始化
 
@@ -351,6 +357,7 @@ end
 function AliceGift:OnSave()
     return {
         cooldown_data = self.cooldown_data
+        obtained_weight1_items = self.obtained_weight1_items
     }
 end
 
@@ -360,6 +367,7 @@ function AliceGift:OnLoad(data)
         -- print("[AliceGift] 加载冷却数据: ", 
         --       self.cooldown_data.world_id, 
         --       self.cooldown_data.last_day)
+        self.obtained_weight1_items = data.obtained_weight1_items or {}
     end
 
      -- 确保权重已初始化（存档加载后）
@@ -389,6 +397,20 @@ function AliceGift:GiveGifts()
         local category = self:GetRandomCategory()
         local item = self:GetRandomItem(category)
         
+        -- 检查是否为已获取的权重1装备
+        if item and category == "equipments" and item.weight == 1 and 
+           self.obtained_weight1_items[item.prefab] then
+            -- 改为从材料类或食物类中抽取
+            local new_category = math.random() < 0.5 and "materials" or "foods"
+            item = self:GetRandomItem(new_category)
+        end
+
+        -- 如果是权重1装备且未被获取过，记录它
+        if item and category == "equipments" and item.weight == 1 and 
+           not self.obtained_weight1_items[item.prefab] then
+            self.obtained_weight1_items[item.prefab] = true
+        end
+
         if item then
             -- 生成物品
             local item_inst = SpawnPrefab(item.prefab)
