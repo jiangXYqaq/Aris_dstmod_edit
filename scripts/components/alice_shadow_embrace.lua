@@ -331,6 +331,11 @@ function AliceShadowEmbrace:ApplyImmunityEffects()
         self.inst.components.carefulwalker:SetCarefulWalkingSpeedMultiplier(1)
     end
     
+    -- 添加免疫标签
+    if self.inst and not self.inst:HasTag("alice_bati") then
+        self.inst:AddTag("alice_bati")
+    end
+
     -- ... 其他免疫效果 ...
 end
 
@@ -355,6 +360,10 @@ function AliceShadowEmbrace:RemoveImmunityEffects()
         self.original_AddGrogginess = nil
     end
     -- ... 其他免疫效果的恢复 ...
+    -- 移除免疫标签
+    if self.inst and self.inst:HasTag("alice_bati") then
+        self.inst:RemoveTag("alice_bati")
+    end
 end
 
 local function NoHoles(pt)
