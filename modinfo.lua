@@ -23,10 +23,20 @@ description = [[
 
 ### 🧹 代码优化
 - 移除冗余调试信息注释
+
+已知问题：
+融合背包布局会导致 alice_coat 的物品栏被错误识别为背包。
+这可能会引发物品复制等问题。
+
+建议：
+
+如果安装了“额外装备栏”模组： 可以使用融合背包布局。
+
+如果没有安装“额外装备栏”模组： 请改用分开的背包布局（分开布局）。
 ]]
 
 author = "Arisu"
-version = "1.3.2" -- Updated version to reflect the latest release
+version = "1.3.3" -- Updated version to reflect the latest release
 
 forumthread = ""
 

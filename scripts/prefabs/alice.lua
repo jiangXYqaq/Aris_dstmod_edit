@@ -229,9 +229,10 @@ local function onsanitydelta(inst, data)
     if not data then
         return
     end
-	if inst.als_ring then
+    --阻止在精神值为0时光环关闭
+	--[[ if inst.als_ring then
         inst.als_ring.Light:Enable(data.newpercent > 0 and true or false)
-	end
+	end ]]
     local oldskin = inst.components.skinner.skin_name
     local newskin = ""
     if data.newpercent > 0.5 then
@@ -804,7 +805,17 @@ local function master_postinit(inst)
     inst.components.sleepingbaguser:SetCanSleepFn(CanSleepInBagFn)
 
     --自定义的组件，在装备暗影防护板对抗天体阵营时生效
-    inst:AddComponent("AliceShadowEmbrace")
+    inst:AddComponent("alice_shadow_embrace")
+
+    -- 延迟初始化以确保所有组件就绪
+    inst:DoTaskInTime(0, function()
+        if inst.components.alice_shadow_embrace then
+            inst.components.alice_shadow_embrace:SetupListeners()
+            print("[AliceShadowEmbrace] Listeners set up")
+        else
+            print("[ERROR] AliceShadowEmbrace component missing")
+        end
+    end)
 
     -- 移除滑倒组件，防止在任何冰面上滑倒
     if inst.components.slipperyfeet then

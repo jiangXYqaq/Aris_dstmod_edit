@@ -249,6 +249,14 @@ end
 
 local function OnShieldLoaded(inst, data)
     if data and data.item then
+        inst.shield_prefab = data.item.prefab
+        local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+        if owner then
+            owner:PushEvent("alice_coat_shield_loaded", {
+                item = data.item,
+                container = inst
+            })
+        end
         inst.components.armor:InitIndestructible(data.item.abs_percent)
         if data.item.planar then
             inst.components.planardefense:SetBaseDefense(data.item.planar)
@@ -259,11 +267,13 @@ local function OnShieldLoaded(inst, data)
         end
 
         if data.item.shield then
+           
             inst.shield = true
             inst.components.cooldown.onchargedfn = OnChargedFn
             inst.lastmainshield = 0
             --inst.components.cooldown:StartCharging(math.max(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
             inst.components.cooldown:StartCharging(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN)
+            
         end
 
         if data.item.prefab == "dread_shield" then
@@ -274,7 +284,7 @@ local function OnShieldLoaded(inst, data)
 
             if data.item.restoretask == nil then
                 data.item.restoretask = data.item:DoPeriodicTask(1,function()
-                    local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+                    --local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
                     if owner and owner.components.sanity then
                         local old = data.item.components.finiteuses:GetUses()
                         local max = data.item.components.finiteuses.total
@@ -300,6 +310,19 @@ local function OnShieldUnloaded(inst, data)
     inst.components.planardefense:SetBaseDefense(0)
     inst.bramble = false
     inst.shield = false
+
+    local prev_prefab = inst.shield_prefab
+    -- 推送事件给玩家
+    if prev_prefab then
+        local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+        if owner then
+            owner:PushEvent("alice_coat_shield_unloaded", {
+                prefab = prev_prefab,
+                container = inst
+            })
+        end
+    end
+    
     
     inst.components.cooldown.onchargedfn = nil
     if inst.task ~= nil then
@@ -385,6 +408,7 @@ local function common()
     inst:AddComponent("container")
 	inst.components.container.canbeopened = true
     inst.components.container.stay_open_on_hide = true
+    inst.shield_prefab = nil
     inst:ListenForEvent("itemget", OnShieldLoaded)
     inst:ListenForEvent("itemlose", OnShieldUnloaded)
 
