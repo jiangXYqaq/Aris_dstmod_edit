@@ -357,6 +357,43 @@ function AliceShadowEmbrace:RemoveImmunityEffects()
     -- ... 其他免疫效果的恢复 ...
 end
 
+local function NoHoles(pt)
+    return not TheWorld.Map:IsPointNearHole(pt)
+end
+
+function AliceShadowEmbrace:SetupTentacleAttack()
+    if self.ontentacleattack then return end
+    
+    self.ontentacleattack = function(inst, data)
+        if data.target and data.target:IsValid() and math.random() < 0.3 then--增加了50%触发概率
+            local pt = data.target:GetPosition()
+            local offset = FindWalkableOffset(pt, math.random() * TWOPI, 2, 3, false, true, NoHoles, false, true)
+            if offset then
+                local tentacle = SpawnPrefab("alice_shadowtentacle")
+                if tentacle then
+                    tentacle.Transform:SetPosition(pt.x + offset.x, 0, pt.z + offset.z)
+                    tentacle.components.combat:SetTarget(data.target)
+                    -- 设置触手主人为玩家（关键新增代码）
+                    tentacle.owner = self.inst
+                end
+            end
+        end
+    end
+end
+
+function AliceShadowEmbrace:EnableTentacleAttack()
+    if not self.ontentacleattack then
+        self:SetupTentacleAttack()
+    end
+    self.inst:ListenForEvent("onattackother", self.ontentacleattack)
+end
+
+function AliceShadowEmbrace:DisableTentacleAttack()
+    if self.ontentacleattack then
+        self.inst:RemoveEventCallback("onattackother", self.ontentacleattack)
+    end
+end
+
 function AliceShadowEmbrace:Activate()
     -- 手动激活期间总是允许激活
     print("manual_active:", self.manual_active, "active:", self.active)
@@ -374,6 +411,8 @@ function AliceShadowEmbrace:Activate()
 
         -- 添加免疫效果：防冰冻、防催眠、免疫减速
         self:ApplyImmunityEffects()
+
+        self:EnableTentacleAttack()
     end
 
     -- 非手动激活的正常检查
@@ -391,6 +430,8 @@ function AliceShadowEmbrace:Activate()
 
         -- 添加免疫效果：防冰冻、防催眠、免疫减速
         self:ApplyImmunityEffects()
+
+        self:EnableTentacleAttack()
     end
 end
 
@@ -416,6 +457,8 @@ function AliceShadowEmbrace:Deactivate()
 
         -- 移除免疫效果
         self:RemoveImmunityEffects()
+
+        self:DisableTentacleAttack()
     end
 end
 

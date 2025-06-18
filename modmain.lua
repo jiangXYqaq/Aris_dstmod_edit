@@ -116,6 +116,7 @@ PrefabFiles = {
 	"alice_robot",
 	"alice_chester",
 	"alice_glasses",
+    "alice_shadowtentacle",
 }
 						
 local skin_modes = {
