@@ -217,6 +217,66 @@ AddCharacterRecipe("shadow_shield",
     {"MODS", "WEAPONS"}
 )
 
+-- 添加烂电线配方 (金块+树枝)
+AddRecipe2(
+    "alice_trinket_6",  -- 配方名称添加前缀
+    {
+        Ingredient("goldnugget", 1),
+        Ingredient("twigs", 1)
+    },
+    TECH.NONE,
+    {
+        product = "trinket_6",  -- 输出物品
+        numtogive = 1           -- 产出数量
+    },
+    {"MODS", "CHARACTER"}  -- 标签
+)
+
+-- 添加废料配方 (烂电线+燧石)
+AddRecipe2(
+    "alice_wagpunk_bits",
+    {
+        Ingredient("trinket_6", 1),
+        Ingredient("flint", 1)
+    },
+    TECH.NONE,
+    {
+        product = "wagpunk_bits",
+        numtogive = 1
+    },
+    {"MODS", "CHARACTER"}
+)
+
+-- 添加电子元件配方 (烂电线+石砖)
+AddRecipe2(
+    "alice_transistor",
+    {
+        Ingredient("trinket_6", 1),
+        Ingredient("cutstone", 1)
+    },
+    TECH.NONE,
+    {
+        product = "transistor",
+        numtogive = 1
+    },
+    {"MODS", "CHARACTER"}
+)
+
+-- 添加齿轮配方 (2废料+2石砖)
+AddRecipe2(
+    "alice_gears",  -- 配方名称添加前缀
+    {
+        Ingredient("wagpunk_bits", 2),
+        Ingredient("cutstone", 2)
+    },
+    TECH.NONE,
+    {
+        product = "gears",
+        numtogive = 1
+    },
+    {"MODS", "CHARACTER"}
+)
+
 --[[ AddCharacterRecipe("wx78module_alc_charge",
 {
     Ingredient("nightmarefuel", 4),
