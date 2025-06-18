@@ -265,12 +265,12 @@ local function OnLoad(inst, data)
         onbecamehuman(inst)
     end
     if data ~= nil then
-        if data.gears_eaten ~= nil then
+        --[[ if data.gears_eaten ~= nil then
             inst._gears_eaten = data.gears_eaten
-        end
-        if data.level ~= nil then
+        end ]]
+        --[[ if data.level ~= nil then
             inst._gears_eaten = (inst._gears_eaten or 0) + data.level
-        end
+        end ]]
         if data._wx78_health then
             inst.components.health:SetCurrentHealth(data._wx78_health)
         end
@@ -284,7 +284,7 @@ local function OnLoad(inst, data)
 end
 
 local function OnSave(inst, data)
-    data.gears_eaten = inst._gears_eaten
+    --data.gears_eaten = inst._gears_eaten
     data._wx78_health = inst.components.health.currenthealth
     data._wx78_sanity = inst.components.sanity.current
     data._wx78_hunger = inst.components.hunger.current
@@ -428,7 +428,7 @@ local function OnDeath(inst)
     inst.components.timer:StopTimer(HUNGERDRAIN_TIMERNAME)
     inst.components.timer:StopTimer(CHARGEREGEN_TIMERNAME)
 
-    if inst._gears_eaten > 0 then
+    --[[ if inst._gears_eaten > 0 then
         local dropgears = math.random(math.floor(inst._gears_eaten / 3), math.ceil(inst._gears_eaten / 2))
         local x, y, z = inst.Transform:GetWorldPosition()
         for i = 1, dropgears do
@@ -450,16 +450,16 @@ local function OnDeath(inst)
         end
 
         inst._gears_eaten = 0
-    end
+    end ]]
 end
 
 local function OnEat(inst, food)
     if food ~= nil and food.components.edible ~= nil then
-        if food.components.edible.foodtype == FOODTYPE.GEARS then
+        --[[ if food.components.edible.foodtype == FOODTYPE.GEARS then
             inst._gears_eaten = inst._gears_eaten + 1
 
             inst.SoundEmitter:PlaySound("dontstarve/characters/wx78/levelup")
-        end
+        end ]]
     end
 
     local charge_amount = TUNING.WX78_CHARGING_FOODS[food.prefab]
@@ -746,7 +746,7 @@ local function master_postinit(inst)
     inst.components.hunger:SetMax(TUNING.ALICE_HUNGER)
     inst.components.sanity:SetMax(TUNING.ALICE_SANITY)
 
-    inst._gears_eaten = 0
+    --inst._gears_eaten = 0
     inst._chip_inuse = 0
     inst._moisture_steps = 0
     inst._temperature_modulelean = 0        -- 正值表示“高温”，负值表示“低温”；参见 wx78_moduledefs
@@ -757,7 +757,7 @@ local function master_postinit(inst)
 
     if inst.components.eater ~= nil then
         inst.components.eater:SetIgnoresSpoilage(true)
-        inst.components.eater:SetCanEatGears()
+        --inst.components.eater:SetCanEatGears()
         inst.components.eater:SetOnEatFn(OnEat)
     end
 
