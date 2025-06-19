@@ -610,8 +610,8 @@ local function GetCritical(inst)
 	local total_crit_chance = base + buff + equip
 	local overflow = math.max(total_crit_chance - 1, 0)
 	local crit_chance = math.min(total_crit_chance, 1)
-    local extra_crit_damage = TUNING.ALICE_LIGHTSWORD_DAMAGE_RATE * 3
-	damage = damage + overflow * extra_crit_damage
+    local extra_crit_damage = TUNING.ALICE_LIGHTSWORD_DAMAGE_RATE or 1
+	damage = damage + overflow * extra_crit_damage * 3
     --print("暴击概率：", base + buff + equip, "暴击数值：", damage)
     return crit_chance, damage
 end

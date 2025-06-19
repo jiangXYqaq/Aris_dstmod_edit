@@ -86,7 +86,7 @@ configuration_options =
         default = "KEY_R",
     },
     {
-        name = "lightsword_damage",
+        name = "lightsword_damage_mul",
         label = "光之剑威力等级",  -- 游戏内显示名称test
         options = {
             {description = "小杯 (34)", data = 0.5},  -- 基础值1x
@@ -94,7 +94,7 @@ configuration_options =
             {description = "大杯 (2x)", data = 2},  -- 68*2
             {description = "超大杯 (4x)", data = 4}  -- 68*4
         },
-        default = 68,  -- 默认选中杯
+        default = 1,  -- 默认选中杯
     },
     {
 		name = "ALC_LANGUAGE",
