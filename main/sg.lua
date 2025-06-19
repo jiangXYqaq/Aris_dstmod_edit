@@ -263,7 +263,7 @@ local alice_shot_fire = State{
             if equip and equip:HasTag("lightsword") then
                 equip:AddTag("fireatk")
                 equip.components.alice_sword.shotmode = 4
-                damage = equip.components.alice_sword:GeDamage()
+                damage = equip.components.alice_sword:GetDamage()
             end
 
             if inst.alc_firefx == nil then

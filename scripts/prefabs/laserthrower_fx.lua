@@ -1,3 +1,4 @@
+--此模块可能处理模式4的攻击逻辑
 local assets =
 {
 	Asset("ANIM", "anim/jiguang2.zip"),

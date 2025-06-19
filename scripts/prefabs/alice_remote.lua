@@ -193,7 +193,7 @@ local function DoPlayerDenfeceBuff(inst)
     if players ~= nil then
         for k, v in pairs(players) do
             if v:IsValid() and v.components.health ~= nil and not v.components.health:IsDead() and not v:HasTag("playerghost") then
-                v.components.health.externalabsorbmodifiers:SetModifier(v, TUNING.ALICE_MUSIC_DEFEMULT, "alice_music")
+                v.components.health.externalabsorbmodifiers:SetModifier(v, TUNING.ALICE_MUSIC_DEFMULT, "alice_music")
 				v:AddTag("alice_bati")
 				SayBuffString(v, STRINGS.ALICE_MUSICBUFF.DEF)
 
