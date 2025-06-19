@@ -594,7 +594,7 @@ end
 -- 暴击
 local function GetCritical(inst)
     local base = inst.alc_baojilv
-    local buff = (inst.light_buff or 0) * 0.3--有改动原0.15
+    local buff = (inst.light_buff or 0) * 0.2--有改动原0.15
     local equip = 0
 
     local damage = inst.alc_baojizhi
@@ -610,13 +610,14 @@ local function GetCritical(inst)
 	local total_crit_chance = base + buff + equip
 	local overflow = math.max(total_crit_chance - 1, 0)
 	local crit_chance = math.min(total_crit_chance, 1)
-	damage = damage + overflow * 3
+    local extra_crit_damage = TUNING.ALICE_LIGHTSWORD_DAMAGE_RATE * 3
+	damage = damage + overflow * extra_crit_damage
     --print("暴击概率：", base + buff + equip, "暴击数值：", damage)
     return crit_chance, damage
 end
 
-local function customdamagemult(inst, target, weapon, multiplier, mount)
-    if mount then
+local function customdamagemult(inst)
+    if inst.replica.rider:IsRiding() then  -- 更直接的骑乘检查
         return 1
     end
     local chance, damage = GetCritical(inst)

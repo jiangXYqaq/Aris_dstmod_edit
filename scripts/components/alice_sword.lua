@@ -86,7 +86,7 @@ end
 function Sword:GetDamage(hit_type)
     local mode = self.shotmode
     local level = self:GeLevel()
-    local damage = 0
+    local damage = 0 
     --1~连射模式 2~能量炮弹 3~EX技能 4~高能激光刀刃
     if mode == 1 then --此处更改了成长后的伤害，因此升级后提升更大，约200%
         damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.7)
@@ -100,7 +100,7 @@ function Sword:GetDamage(hit_type)
             damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.0 + level * 2.0)
         end
     elseif mode == 3 then
-        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (25 + level * 10)
+        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (15 + level * 10)
     elseif mode == 4 then
         damage = TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_BASE + TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_PER_LEVEL * level
     end

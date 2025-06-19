@@ -85,7 +85,7 @@ local function OnHit(inst, attacker, target)
                 
                 -- 添加暴击计算 (关键修复!)
                 if attacker.components.combat and attacker.components.combat.customdamagemultfn then
-                    damage = damage * attacker.components.combat.customdamagemultfn(attacker, target)
+                    damage = damage * attacker.components.combat.customdamagemultfn(attacker)
                 end
                 local stimuli = nil
                 if attacker.components.electricattacks ~= nil then
@@ -209,7 +209,7 @@ local function OnUpdateProjectile(inst)
                         
                         -- 添加暴击计算 (关键修复!)
                         if attacker.components.combat and attacker.components.combat.customdamagemultfn then
-                            damage = damage * attacker.components.combat.customdamagemultfn(attacker, target)
+                            damage = damage * attacker.components.combat.customdamagemultfn(attacker)
                         end
                     end
                     local stimuli = nil
@@ -297,7 +297,7 @@ local function cannonball_maseter(inst)
 end
 
 -- 击中效果
-local function OnHit_laser(target)
+local function OnHit_shot3(target)
     if target and target:IsValid() then
         SpawnPrefab("alterguardian_laserhit"):SetTarget(target)
     end
@@ -333,9 +333,9 @@ local function masterfn(inst)
     inst:AddComponent("lightsword_projectile")
 end
 
-local function laser_master(inst)
+local function shot3_master(inst) -- Renamed from laser_master
     masterfn(inst)
-	inst.components.lightsword_projectile:SetOnHitFn(OnHit_laser)
+	inst.components.lightsword_projectile:SetOnHitFn(OnHit_shot3)
 end
 
 local function shot1_master(inst)
@@ -472,7 +472,7 @@ return
     MakeProjectile("alice_shot3", {
         anim = {bank = "alice_shot_fx", build = "alice_shot_fx", anim = "idle", onground = false},
         assets = assets,
-        masterfn = laser_master,
+        masterfn = shot3_master, -- Updated reference
         commonfn = commonfn,
         maxhits = math.huge,
         speed = 200,

@@ -112,6 +112,9 @@ local function fn()
 	inst:AddComponent("weapon")
 	inst.components.weapon:SetDamage(10)
 
+	inst:AddComponent("planardamage")
+	inst.components.planardamage:SetBaseDamage(15) -- 默认值，可被后续逻辑覆盖
+
 	inst.SetFlamethrowerAttacker = SetFlamethrowerAttacker
 	inst.KillFX = KillFX
 	inst.InitDamage = InitDamage

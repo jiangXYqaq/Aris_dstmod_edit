@@ -134,7 +134,7 @@ function LightSword_projectile:Attack(target)
         local damage = defaultdamage * externaldamagemultipliers
 
         if self.player.components.combat and self.player.components.combat.customdamagemultfn then
-            damage = damage * self.player.components.combat.customdamagemultfn(self.player, target)
+            damage = damage * self.player.components.combat.customdamagemultfn(self.player)
         end
         local stimuli = nil
         if self.lightatk or self.player.components.electricattacks ~= nil then
