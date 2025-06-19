@@ -161,25 +161,30 @@ local function GetSkillString(damage, flydamage, mode)
     return stringdata[mode]["string"]
 end
 
-local maxlevel = {10, 4, 5, 5}
+local maxlevel = {5, 5, 5, 1}
 
 local function GetString(level, mode)
     if mode then
         level = math.min(maxlevel[mode], level)
     end
     local damagedata = {
+        -- 模式1: 连射模式 (200%伤害成长)
         {
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (0.5 + level * 0.1) / 68 * 100,
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.7),
         },
+        -- 模式2: 能量炮弹 (区分命中类型)
         {
-            flydamage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.5) / 68 * 100,
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.25) / 68 * 100,
+            flydamage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.5 + level * 1.2),    -- 直接命中
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.0 + level * 2.0),       -- 爆炸范围
         },
+        -- 模式3: EX技能 (超高倍率)
         {
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.5 + level * 0.5) / 68 * 100,
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (25 + level * 10),
         },
+        -- 模式4: 高能激光刀刃 (独立常数)
         {
-            damage = TUNING.ALICE_LASERTHROW_PLANAR_DAMAGE_MIN + TUNING.ALICE_LASERTHROW_PLANAR_DAMAGE_UP * level,
+            damage = TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_BASE 
+                   + TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_PER_LEVEL * level,
         },
     }
     local damage = damagedata[mode]["damage"]
