@@ -241,3 +241,5 @@ STRINGS.ACTIONS.ALICE_BROOM_HARVEST = "Harvest"
 STRINGS.ACTIONS.ALICE_BROOM_DEFAULT = "Use Broom" -- Default text
 STRINGS.ACTIONS.ALICE_BROOM_SENSEI_WARNING = "Alice doesn't want to mess up Sensei's belongings."
 STRINGS.ACTIONS.ALICE_BROOM_LOCK_MAPTELE = "Teleport feature not unlocked"
+
+STRINGS.ACTIONS.ALICE_SHADOW_EMBRACE_FORCE_ACTIVE = "Lunar, I have returned"

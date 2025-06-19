@@ -58,23 +58,27 @@ function AliceShadowEmbrace:RemoveListeners()
     end
 end
 
--- 核心状态检查函数
 function AliceShadowEmbrace:CheckConditions()
-    -- 获取当前装备的alice_coat
-    local coat = self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY)
+    local inventory = self.inst.components.inventory
+    if not inventory then return false end
     
-    -- 检查是否装备了alice_coat且内部有暗影防护板
-    if coat and coat:HasTag("alice_coat") then
-        local container = coat.components.container
-        if container then
-            for slot = 1, container:GetNumSlots() do
-                local item = container:GetItemInSlot(slot)
-                if item and item.prefab == "shadow_shield" then
-                    return true
+    -- 遍历所有装备槽位
+    for slot, item in pairs(inventory.equipslots) do
+        -- 跳过手部和头部装备（仅检查身体相关装备）
+        if slot ~= EQUIPSLOTS.HANDS and slot ~= EQUIPSLOTS.HEAD then
+            if item and item:HasTag("alice_coat") then
+                local container = item.components.container
+                if container then
+                    -- 直接检查第一个物品栏（如您所述只有一个物品栏）
+                    local innerItem = container:GetItemInSlot(1)
+                    if innerItem and innerItem.prefab == "shadow_shield" then
+                        return true
+                    end
                 end
             end
         end
     end
+    
     return false
 end
 
@@ -102,7 +106,6 @@ end
 
 -- 修改手动激活函数 - 直接激活效果
 function AliceShadowEmbrace:TriggerManualActivate()
-    -- 清除快速更换计时器
     if self.quick_swap_timer then
         self.quick_swap_timer:Cancel()
         self.quick_swap_timer = nil
@@ -111,6 +114,11 @@ function AliceShadowEmbrace:TriggerManualActivate()
     
     -- 设置手动激活状态
     self.manual_active = true
+
+    -- 添加角色文本
+    if self.inst.components.talker then
+        self.inst.components.talker:Say(STRINGS.ACTIONS.ALICE_SHADOW_EMBRACE_FORCE_ACTIVE)
+    end
     
     -- 刷新或启动60秒计时器
     if self.manual_timer then

@@ -243,3 +243,5 @@ STRINGS.ACTIONS.ALICE_BROOM_HARVEST = "收获"
 STRINGS.ACTIONS.ALICE_BROOM_DEFAULT = "使用扫帚" -- 备用文本
 STRINGS.ACTIONS.ALICE_BROOM_SENSEI_WARNING = "爱丽丝不想弄乱老师的包裹。" -- Alice doesn't want to mess up Sensei's belongings.
 STRINGS.ACTIONS.ALICE_BROOM_LOCK_MAPTELE = "传送功能未解锁" -- Teleport feature not unlocked
+
+STRINGS.ACTIONS.ALICE_SHADOW_EMBRACE_FORCE_ACTIVE = "月亮啊~我已归来"
