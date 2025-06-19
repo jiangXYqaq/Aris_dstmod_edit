@@ -1,3 +1,4 @@
+--此模块处理模式2攻击逻辑和模式1234实体创建
 local assets =
 {
     Asset("ANIM", "anim/cannonball_rock.zip"),
@@ -77,7 +78,15 @@ local function OnHit(inst, attacker, target)
         local ents = TheSim:FindEntities(pos.x, 0, pos.z, TUNING.ALICE_SHOT2_SPLASH_RADIUS, AOE_TARGET_TAGS, AREAATTACK_EXCLUDE_TAGS)
 		for _, target in ipairs(ents) do    
 			if target ~= attacker and target:IsValid() and not target:IsInLimbo() and not (target.components.health and target.components.health:IsDead()) then
-                local damage = weapon.components.alice_sword:GeDamage(false)
+                local damage = weapon.components.alice_sword:GetDamage("splash")
+                -- 添加外部伤害倍率
+                local externaldamagemultipliers = (attacker.components.combat and attacker.components.combat.externaldamagemultipliers:Get()) or 1
+                damage = damage * externaldamagemultipliers
+                
+                -- 添加暴击计算 (关键修复!)
+                if attacker.components.combat and attacker.components.combat.customdamagemultfn then
+                    damage = damage * attacker.components.combat.customdamagemultfn(attacker, target)
+                end
                 local stimuli = nil
                 if attacker.components.electricattacks ~= nil then
                     stimuli = "electric"
@@ -191,9 +200,17 @@ local function OnUpdateProjectile(inst)
                 if not is_wall or is_wall and on_other_boat then
                     local attacker = inst.components.complexprojectile.attacker or inst
                     local weapon = Utils.FindEquipWithTag(attacker, "lightsword")
-                    local damage = 68
+                    local damage = TUNING.ALICE_LIGHTSWORD_DAMAGE
                     if weapon then
-                        damage = weapon.components.alice_sword:GeDamage(true)
+                        damage = weapon.components.alice_sword:GetDamage("direct")
+                        -- 添加外部伤害倍率
+                        local externaldamagemultipliers = (attacker.components.combat and attacker.components.combat.externaldamagemultipliers:Get()) or 1
+                        damage = damage * externaldamagemultipliers
+                        
+                        -- 添加暴击计算 (关键修复!)
+                        if attacker.components.combat and attacker.components.combat.customdamagemultfn then
+                            damage = damage * attacker.components.combat.customdamagemultfn(attacker, target)
+                        end
                     end
                     local stimuli = nil
                     if attacker.components.electricattacks ~= nil then
