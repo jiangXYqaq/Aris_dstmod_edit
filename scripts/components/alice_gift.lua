@@ -356,8 +356,8 @@ end
 -- 保存/加载
 function AliceGift:OnSave()
     return {
-        cooldown_data = self.cooldown_data
-        obtained_weight1_items = self.obtained_weight1_items
+        cooldown_data = self.cooldown_data,
+        obtained_weight1_items = self.obtained_weight1_items --line 360
     }
 end
 
