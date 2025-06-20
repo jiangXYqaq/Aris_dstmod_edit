@@ -1,211 +1,178 @@
-Aris_dstmod_edit
-DST Mod: Tendou Aris (Blue Archive) Edit
-Origin: Don't Starve Together Workshop - huayahua's Workshop Tendou Aris (Blue Archive)
-Note: Modifications based on personal gameplay experience. Not officially authorized by the original creator.
+# DST Mod: Tendou Aris (Blue Archive) Edit
 
-角色系统：天童爱丽丝 (TENDOU ARIS)
-Prefab: alice
+## Overview
+**Origin:** Don't Starve Together Workshop - huayahua's Workshop Tendou Aris (Blue Archive)  
+**Prefab:** `alice`  
+**Note:** Modifications based on personal gameplay experience. Not officially authorized by the original creator.
 
-基础属性
-三维值：比WX-78高50点（生命/精神/饱食度）
+---
 
-移速：+25%基础移速
+## Character System: 天童爱丽丝 (TENDOU ARIS)
 
-免疫装备减速效果（如小猪背包/大理石甲）
+### 基础属性
+- **三维值：** 比WX-78高50点（生命/精神/饱食度）
+- **移速：** +25%基础移速
+- **免疫装备减速效果**（如小猪背包/大理石甲）
 
-核心特性
-机械体质
+### 核心特性
+- **机械体质**
+  - 可制作WX-78专属道具
+  - 不会被闪电击中
+  - 发条生物不会主动攻击
+- **环境适应**
+  - 不会在冰面滑倒
+  - 自带发光光环（不占用装备栏）
 
-可制作WX-78专属道具
+### 双形态系统
+| 形态      | 触发条件       | 外观   | 特殊能力                          |
+|-----------|----------------|--------|-----------------------------------|
+| 爱丽丝    | 精神值≥50%     | 蓝色   | 月亮阵营（Lunar Aligned）         |
+| 凯伊（Key/Kei） | 精神值<50% | 粉红色 | 暗影阵营（Shadow Aligned）<br>免疫查理攻击 |
 
-不会被闪电击中
+### 暴击机制
+- 自带暴击率组件
+- 多件装备可叠加暴击率/暴击伤害
+- 溢出暴击率自动转化为暴击伤害
 
-发条生物不会主动攻击
+---
 
-环境适应
+## 专属模块系统 (6槽位)
 
-不会在冰面滑倒
+### 1. 充能电路 (Charging Circuit)
+`Prefab: wx78module_alc_charge`  
+**槽位占用:** 1  
+- 提供两个内部物品栏存放可充电物品
+- 点击UI充电按钮恢复物品耐久
+- **可充电物品：**
+  - 爱丽丝手机 (`alice_remote`)
+  - 电池 (`alice_battery`)
+- **电池机制：** 装入光之剑后，攻击消耗电量
+- **注意：** 取下模块可能导致错误，建议装备在底层槽位
 
-自带发光光环（不占用装备栏）
+### 2. 强化魔法 (Magic Enhancement)
+`Prefab: wx78module_alc_magic`  
+**槽位占用:** 2  
+- **属性增益：**
+  - 永久提升：生命值+240 / 饱食度+100 / 精神值+200
+  - 饱食消耗速度降低50%（每日仅消耗37.5）
+  - 每5秒回复：10生命值 + 20精神值
+- 恒温：永远保持舒适温度
+- 战斗强化：增加暴击率与暴击伤害
 
-双形态系统
+### 3. 光之勇者 (Light Warrior)
+`Prefab: wx78module_alc_battle`  
+**槽位占用:** 3  
+- 光层积累：战斗时每2秒获得1层光（最高10层）
+- 骨甲护盾：被攻击消耗1层光召唤护盾（抵消一次伤害）
+- 暴击强化：每层光提供额外暴击率
 
-形态	触发条件	外观	特殊能力
-爱丽丝	精神值≥50%	蓝色	月亮阵营（Lunar Aligned）
-凯伊（Key/Kei）	精神值<50%	粉红色	暗影阵营（Shadow Aligned）
-免疫查理攻击
-暴击机制
+---
 
-自带暴击率组件
+## 专属武器：光之剑·超新星 (Supernova)
+`Prefab: alice_sword`
 
-多件装备可叠加暴击率/暴击伤害
+### 攻击模式
+| 模式     | 类型         | 特性                      | 攻速/冷却       |
+|----------|--------------|---------------------------|-----------------|
+| MODE 1   | 连射         | 单体光波攻击              | 1.25次/秒       |
+| MODE 2   | 能量炮弹     | 双段AOE伤害+强力开采      | 1.25次/秒       |
+| MODE 3   | EX技能       | 蓄力3秒的大范围激光炮     | 冷却15秒        |
+| MODE 4   | 激光刀刃     | 持续激光攻击（可移动）    | 0.1秒/次        |
 
-溢出暴击率自动转化为暴击伤害
+### 解锁与升级
+| 模式   | 初始    | 解锁条件              | 升级材料     | 最大等级 |
+|--------|---------|-----------------------|--------------|----------|
+| MODE 1 | 0级     | 无                   | 巨鹿眼球     | 5        |
+| MODE 2 | 未解锁  | 克劳斯/远古守护者     | 同解锁材料   | 5        |
+| MODE 3 | 0级     | 无                   | 彩虹宝石     | 5        |
+| MODE 4 | 未解锁  | 天体英雄/织影者       | 同解锁材料   | 1        |
 
-专属模块系统 (6槽位)
-1. 充能电路 (Charging Circuit)
-Prefab: wx78module_alc_charge
-槽位占用: 1
+> **注：** -1级=未解锁，0级=实际1级
 
-提供两个内部物品栏存放可充电物品
+---
 
-点击UI充电按钮恢复物品耐久
+## 身体装备系统
 
-可充电物品：
+### 冲锋外套 (Assault Coat)
+`Prefab: alice_battlecoat`  
+- **外观：** 天童爱丽丝校服版
+- **属性：**
+  - 无限耐久 + 240隔热值（自动适应）
+  - 100%防水 + 25%移速加成
+  - 精神回复+6.67/分钟 + 火焰免疫
+- **特殊：** 内置防护板槽位（初始装备）
 
-爱丽丝手机 (alice_remote)
+### 女仆装 (Maid Hero Coat)
+`Prefab: alice_maidcoat`  
+- **外观：** 女仆爱丽丝（冲锋外套上位替代）
+- **强化属性：**
+  - 移速加成+25% + 精神回复+13.33/分钟
+  - +20位面防御 + 免疫酸雨/月雹
+- **获取：** 需后期制作
 
-电池 (alice_battery)
+---
 
-电池机制：装入光之剑后，攻击消耗电量
-
-注意：取下模块可能导致错误，建议装备在底层槽位
-
-2. 强化魔法 (Magic Enhancement)
-Prefab: wx78module_alc_magic
-槽位占用: 2
-
-属性增益：
-
-永久提升：生命值+240 / 饱食度+100 / 精神值+200
-
-饱食消耗速度降低50%（每日仅消耗37.5）
-
-每5秒回复：10生命值 + 20精神值
-
-恒温：永远保持舒适温度
-
-战斗强化：增加暴击率与暴击伤害
-
-3. 光之勇者 (Light Warrior)
-Prefab: wx78module_alc_battle
-槽位占用: 3
-
-光层积累：战斗时每2秒获得1层光（最高10层）
-
-骨甲护盾：被攻击消耗1层光召唤护盾（抵消一次伤害）
-
-暴击强化：每层光提供额外暴击率
-
-专属武器：光之剑·超新星 (Supernova)
-Prefab: alice_sword
-
-攻击模式
-模式	类型	特性	攻速/冷却
-MODE 1	连射	单体光波攻击	1.25次/秒
-MODE 2	能量炮弹	双段AOE伤害+强力开采	1.25次/秒
-MODE 3	EX技能	蓄力3秒的大范围激光炮	冷却15秒
-MODE 4	激光刀刃	持续激光攻击（可移动）	0.1秒/次
-解锁与升级
-模式	初始	解锁条件	升级材料	最大等级
-MODE 1	0级	无	巨鹿眼球	5
-MODE 2	未解锁	克劳斯/远古守护者	同解锁材料	5
-MODE 3	0级	无	彩虹宝石	5
-MODE 4	未解锁	天体英雄/织影者	同解锁材料	1
-注：-1级=未解锁，0级=实际1级
-
-身体装备系统
-冲锋外套 (Assault Coat)
-Prefab: alice_battlecoat
-
-外观：天童爱丽丝校服版
-
-属性：
-
-无限耐久 + 240隔热值（自动适应）
-
-100%防水 + 25%移速加成
-
-精神回复+6.67/分钟 + 火焰免疫
-
-特殊：内置防护板槽位（初始装备）
-
-女仆装 (Maid Hero Coat)
-Prefab: alice_maidcoat
-
-外观：女仆爱丽丝（冲锋外套上位替代）
-
-强化属性：
-
-移速加成+25% + 精神回复+13.33/分钟
-
-+20位面防御 + 免疫酸雨/月雹
-
-获取：需后期制作
-
-防护板系统
+## 防护板系统
 装备在外套内部槽位提供防御：
 
-类型	Prefab	防御力	特殊属性
-木质护板	wooden_shield	85%	基础护甲
-金属护板	metal_shield	85%	基础护甲
-复合护板	dread_shield	90%	+10位面防御
-自动回复耐久
-位面护板	dimensional_shield	80%	+25位面防御
-荆棘护板	thorn_shield	85%	反弹伤害
-暗影防护板	shadow_shield	0%	无限耐久+骨甲护盾
-暗影防护板特殊机制
-启蒙状态强化：
+| 类型         | Prefab             | 防御力 | 特殊属性                     |
+|--------------|--------------------|--------|------------------------------|
+| 木质护板     | wooden_shield      | 85%    | 基础护甲                     |
+| 金属护板     | metal_shield       | 85%    | 基础护甲                     |
+| 复合护板     | dread_shield       | 90%    | +10位面防御<br>自动回复耐久  |
+| 位面护板     | dimensional_shield | 80%    | +25位面防御                  |
+| 荆棘护板     | thorn_shield       | 85%    | 反弹伤害                     |
+| 暗影防护板   | shadow_shield      | 0%     | 无限耐久+骨甲护盾            |
 
-90%减伤 + 精神值锁定0
+### 暗影防护板特殊机制
+- **启蒙状态强化：**
+  - 90%减伤 + 精神值锁定0
+  - 免疫控制 + 暗影生物中立化
+  - 30%概率召唤强化触手（+15位面伤害，命中回5生命）
+- **手动激活：** 快速取下再装备获得60秒强化效果
 
-免疫控制 + 暗影生物中立化
+---
 
-30%概率召唤强化触手（+15位面伤害，命中回5生命）
-手动激活：快速取下再装备获得60秒强化效果
+## 手部装备：爱丽丝扫把 (Maid Hero's Broom)
+`Prefab: alice_broom`  
+- **基础：** +25%移速
+- **升级：**
+  - 兔子 (`rabbit`)：+50%移速（总计75%）
+  - 橙宝石 (`orangegem`)：解锁无消耗地图传送
+- **右键功能：**
+  - 更换物品皮肤
+  - 立即收获作物（+100%产物）
+  - 拾取8格内同名掉落物
+- **限制：** 无法处理带容器/特殊状态物品
 
-手部装备：爱丽丝扫把 (Maid Hero's Broom)
-Prefab: alice_broom
+---
 
-基础：+25%移速
+## 专属物品系统
 
-升级：
+### 爱丽丝手机 (Alice's Phone)
+`Prefab: alice_remote`  
+- **功能：**
+  - 开启光照
+  - 命令扫地机器人嘲讽
+  - 播放音乐
 
-兔子 (rabbit)：+50%移速（总计75%）
+### 扫地机器人 (Cleaning Robot)
+`Prefab: alice_robot`  
+- **属性：** 10,000生命值 + 高额回复 + 16格物品栏
+- **强化：**
+  - 弹性空间制造器 (`chestupgrade_stacksize`)：突破堆叠上限
+  - 每格放入冰 (`ice`)：物品获得反鲜效果
+- **行为：** 跟随手机移动（未来计划自动拾取）
 
-橙宝石 (orangegem)：解锁无消耗地图传送
+---
 
-右键功能：
-
-更换物品皮肤
-
-立即收获作物（+100%产物）
-
-拾取8格内同名掉落物
-
-限制：无法处理带容器/特殊状态物品
-
-专属物品系统
-爱丽丝手机 (Alice's Phone)
-Prefab: alice_remote
-
-功能：
-
-开启光照
-
-命令扫地机器人嘲讽
-
-播放音乐
-
-扫地机器人 (Cleaning Robot)
-Prefab: alice_robot
-
-属性：10,000生命值 + 高额回复 + 16格物品栏
-
-强化：
-
-弹性空间制造器 (chestupgrade_stacksize)：突破堆叠上限
-
-每格放入冰 (ice)：物品获得反鲜效果
-
-行为：跟随手机移动（未来计划自动拾取）
-
-术语对照表
-中文	Prefab	英文
-天童爱丽丝	alice	TENDOU ARIS
-光之剑	alice_sword	Supernova
-冲锋外套	alice_battlecoat	Assault Coat
-女仆装	alice_maidcoat	Maid Hero Coat
-暗影防护板	shadow_shield	Shadow Shield
-爱丽丝扫把	alice_broom	Maid Hero's Broom
-扫地机器人	alice_robot	Cleaning Robot
+## 术语对照表
+| 中文         | Prefab             | 英文                 |
+|--------------|--------------------|----------------------|
+| 天童爱丽丝   | alice              | TENDOU ARIS         |
+| 光之剑       | alice_sword        | Supernova           |
+| 冲锋外套     | alice_battlecoat   | Assault Coat        |
+| 女仆装       | alice_maidcoat     | Maid Hero Coat      |
+| 暗影防护板   | shadow_shield      | Shadow Shield       |
+| 爱丽丝扫把   | alice_broom        | Maid Hero's Broom   |
+| 扫地机器人   | alice_robot        | Cleaning Robot      |

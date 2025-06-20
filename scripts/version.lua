@@ -2,7 +2,7 @@ return {
     MAJOR = 1,
     MINOR = 3,
     PATCH = 3, -- Updated patch version for the latest release
-    SUFFIX = "dev" -- Stable release
+    SUFFIX = "release" -- Stable release
     --[[ v1.3.3更新内容：
 新增每日礼物系统：
 手动领取(默认U键), 可配置类型偏好和数量
