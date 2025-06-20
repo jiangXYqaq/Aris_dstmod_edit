@@ -1,5 +1,22 @@
 GLOBAL.setmetatable(env,{__index=function(t,k) return GLOBAL.rawget(GLOBAL,k) end})
 
+local function GetKeyFromConfig(configName, defaultKey)
+    local configValue = GetModConfigData(configName)
+    
+    -- 如果用户选择了"禁用"，直接返回 false
+    if configValue == false then
+        return false
+    end
+    
+    -- 如果返回的是字符串（如 "KEY_Q"），转换为实际的键值常量
+    if type(configValue) == "string" then
+        return _G[configValue] or defaultKey
+    end
+    
+    -- 其他情况返回默认键
+    return defaultKey
+end
+
 -- 三维
 TUNING.ALICE_HEALTH = TUNING.WX78_HEALTH + 50 --加50
 TUNING.ALICE_HUNGER = TUNING.WX78_HUNGER + 50
@@ -66,8 +83,8 @@ TUNING.ALICE_LIGHTSWORD_DAMAGE = TUNING.ALICE_LIGHTSWORD_DAMAGE_RATE * 68
 
 TUNING.ALICECOAT_PERISHTIME = 4800 --似乎没有使用
 
-TUNING.LIGHTSWORD_KEY = GetModConfigData("LIGHTSWORD_KEY") or KEY_E
-TUNING.EX_MODE_KEY = GetModConfigData("EX_MODE_KEY") or KEY_R -- New
+TUNING.LIGHTSWORD_KEY = GetKeyFromConfig("LIGHTSWORD_KEY", KEY_E)
+TUNING.EX_MODE_KEY = GetKeyFromConfig("EX_MODE_KEY", KEY_R)
 
 TUNING.LIGHTSWORDCD = 15 --old 20
 
@@ -125,7 +142,7 @@ TUNING.ALICE_SWORD_CHANCE = 0.3
 TUNING.ALICE_SWORD_VALUE = 3.0
 
 TUNING.ALICE_GIFT_COUNT = 3 -- 每次使用获得的礼物数量
-TUNING.ALICE_GIFT_KEY = GetModConfigData("ALICE_GIFT_KEY") or KEY_U
+TUNING.ALICE_GIFT_KEY = GetKeyFromConfig("ALICE_GIFT_KEY", KEY_U)
 TUNING.GIFT_WEIGHT_PREFERENCE = GetModConfigData("GIFT_WEIGHT_PREFERENCE") or "balanced"
 
 TUNING.ALICE_SHADOW_SHIELD_COOLDOWN = 1

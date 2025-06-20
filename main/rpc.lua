@@ -40,12 +40,9 @@ AddClassPostConstruct("widgets/controls", function(self)
     
 end)
 
-local stringkey = TUNING.LIGHTSWORD_KEY or KEY_E
-local key = _G[stringkey]
-local EX_MODE_KEY = TUNING.EX_MODE_KEY or KEY_R
-local ex_key = _G[EX_MODE_KEY]
-local ALICE_GIFT_KEY = TUNING.ALICE_GIFT_KEY or KEY_U
-local gift_key = _G[ALICE_GIFT_KEY]
+
+local ex_key = TUNING.EX_MODE_KEY
+local gift_key = TUNING.ALICE_GIFT_KEY
 
 --更换武器准星
 AddClientModRPCHandler("alice", "updataaoereticule", function(num)
@@ -180,11 +177,11 @@ local function OnRefuseItem(inst, giver, item)
     end
 end
 
---新增EX键，快速切换到EX模式，无需打开UI。
+-- EX模式切换监听
 AddClassPostConstruct("widgets/controls", function(self)
     if self.owner then
-        -- EX模式切换监听
-        if self.ex_mode_handler == nil then
+        -- 只在功能启用时添加监听器
+        if self.ex_mode_handler == nil and ex_key ~= false then
             self.ex_mode_handler = TheInput:AddKeyHandler(function(key, down)
                 if down and key == ex_key then
                     if ThePlayer and not ThePlayer:HasTag("playerghost") then
@@ -262,12 +259,12 @@ if TheNet and TheNet:GetIsServer() then
     end)
 end
 
--- 客户端按键处理（简化版）
+-- 礼物功能按键监听
 local key_handler_added = false
 
 AddClassPostConstruct("widgets/controls", function(self)
-    -- Ensure the key handler is added only once
-    if not key_handler_added and self.owner == ThePlayer and gift_key then
+    -- 只在功能启用且未添加过监听器时执行
+    if not key_handler_added and self.owner == ThePlayer and gift_key ~= false then
         self.gift_key_handler = TheInput:AddKeyHandler(function(key, down)
             if down and key == gift_key then
                 SendModRPCToServer(MOD_RPC["alice_gift"]["request_gift"])

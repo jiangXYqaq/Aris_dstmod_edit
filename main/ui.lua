@@ -4,27 +4,28 @@ local Utils = require("alice_utils/utils")
 local weaponui = require("widgets/weaponui")
 local musicui = require("widgets/musicui")
 
-local key = _G[TUNING.LIGHTSWORD_KEY]
-
-TheInput:AddKeyUpHandler(key, function()
-    if not (ThePlayer or Utils.IsDefaultScreen()) then
-        return
-    end
-
-    local weapon = Utils.FindEquipWithTag(ThePlayer, "lightsword")
-    if not weapon then
-        --ThePlayer.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.NO_LIGHTSWORD)
-        return
-    end
-
-    if ThePlayer.weaponui then
-        if ThePlayer.weaponui.opening then
-            ThePlayer.weaponui:Close()
-        else
-            ThePlayer.weaponui:Open()
+local lightsword_key = TUNING.LIGHTSWORD_KEY
+if lightsword_key ~= false then
+    TheInput:AddKeyUpHandler(lightsword_key, function()
+        if not (ThePlayer or Utils.IsDefaultScreen()) then
+            return
         end
-    end
-end)
+
+        local weapon = Utils.FindEquipWithTag(ThePlayer, "lightsword")
+        if not weapon then
+            --ThePlayer.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.NO_LIGHTSWORD)
+            return
+        end
+
+        if ThePlayer.weaponui then
+            if ThePlayer.weaponui.opening then
+                ThePlayer.weaponui:Close()
+            else
+                ThePlayer.weaponui:Open()
+            end
+        end
+    end)
+end 
 
 
 local function AddUI(self)

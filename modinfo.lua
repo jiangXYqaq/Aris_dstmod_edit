@@ -61,9 +61,11 @@ priority = 10
 local key_list = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","TAB","CAPSLOCK","LSHIFT","RSHIFT","LCTRL","RCTRL","LALT","RALT","ALT","CTRL","SHIFT","SPACE","ENTER","ESCAPE","MINUS","EQUALS","BACKSPACE","PERIOD","SLASH","LEFTBRACKET","BACKSLASH","RIGHTBRACKET","TILDE","PRINT","SCROLLOCK","PAUSE","INSERT","HOME","DELETE","END","PAGEUP","PAGEDOWN","UP","DOWN","LEFT","RIGHT","KP_DIVIDE","KP_MULTIPLY","KP_PLUS","KP_MINUS","KP_ENTER","KP_PERIOD","KP_EQUALS"}
 local key_options = {}
 
+-- 创建带禁用选项的按键列表
 for i = 1, #key_list do
     key_options[i] = { description = key_list[i], data = "KEY_"..key_list[i] }
 end
+key_options[#key_options + 1] = {description = "禁用", data = false}  -- 添加禁用选项
 
 local function en_zh(en, zh)
 	return (locale == "zh" or locale == "zhr" or locale == "zht") and zh or en
@@ -76,7 +78,8 @@ configuration_options =
 		label = en_zh("Information Key", "信息面板按键"),
 		hover = en_zh("Set the shortcut key for the lightsword information", "设置光之剑信息面板快捷键"),
         options = key_options,
-		default = "KEY_Q",
+		default = "KEY_E",
+        is_keylist = true
 	},
 	{
         name = "EX_MODE_KEY",
@@ -84,17 +87,18 @@ configuration_options =
         hover = en_zh("Set the shortcut key for EX attack mode", "设置EX攻击模式快捷键"),
         options = key_options,
         default = "KEY_R",
+        is_keylist = true
     },
     {
         name = "lightsword_damage_mul",
-        label = "光之剑威力等级",  -- 游戏内显示名称test
+        label = "光之剑威力等级",
         options = {
-            {description = "小杯 (34)", data = 0.5},  -- 基础值1x
-            {description = "中杯 (68/默认)", data = 1},  -- 基准配置
-            {description = "大杯 (2x)", data = 2},  -- 68*2
-            {description = "超大杯 (4x)", data = 4}  -- 68*4
+            {description = "小杯 (34)", data = 0.5},
+            {description = "中杯 (68/默认)", data = 1},
+            {description = "大杯 (2x)", data = 2},
+            {description = "超大杯 (4x)", data = 4}
         },
-        default = 1,  -- 默认选中杯
+        default = 1,
     },
     {
 		name = "ALC_LANGUAGE",
@@ -113,8 +117,8 @@ configuration_options =
         hover = en_zh("Set the shortcut key for Alice's gift feature", "设置爱丽丝礼物功能快捷键"),
         options = key_options,
         default = "KEY_U",
+        is_keylist = true
     },
-    -- 新增的权重偏好设置
     {
         name = "GIFT_WEIGHT_PREFERENCE",
         label = "礼物类型偏好",
@@ -127,3 +131,11 @@ configuration_options =
         default = "balanced"
     }
 }
+
+-- 标记所有按键配置项
+for i = 1, #configuration_options do
+    local opt = configuration_options[i]
+    if opt.options == key_options then
+        opt.is_keylist = true
+    end
+end

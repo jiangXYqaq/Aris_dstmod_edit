@@ -131,9 +131,21 @@ local button_data = {
 }
 
 function WeaponUI:Initdata()
-    local key = _G[TUNING.LIGHTSWORD_KEY]
+    local key_name = "禁用"  -- 默认显示"禁用"
+    
+    -- 如果功能启用，获取按键名称
+    if TUNING.LIGHTSWORD_KEY ~= false then
+        -- 从键常量反向查找键名
+        for k, v in pairs(_G) do
+            if type(k) == "string" and k:find("KEY_") and v == TUNING.LIGHTSWORD_KEY then
+                key_name = k:gsub("KEY_", "")  -- 去掉"KEY_"前缀
+                break
+            end
+        end
+    end
+    
     self.data = {
-        key = STRINGS.UI.CONTROLSSCREEN.INPUTS[1][key],
+        key = key_name,  -- 显示按键名称或"禁用"
         shotlevel = 0,
         powerlevel = 0,
         exlevel = 0,
