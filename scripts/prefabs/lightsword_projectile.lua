@@ -14,7 +14,7 @@ local prefabs =
 
 local Utils = require("alice_utils/utils")
 local PROJECTILE_MUST_ONE_OF_TAGS = { "_combat", "_health", "blocker" }
-local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player" }
+local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player", "companion" }
 
 local ONHIT_MUST_ONE_OF_TAGS = { "oceanfishable", "kelp", "_inventoryitem", "wave", "_workable" }
 
@@ -64,7 +64,7 @@ local function LaunchSound(inst)
     inst.SoundEmitter:PlaySound("monkeyisland/cannon/shoot")
 end
 
-local function OnHit(inst, attacker, target)
+local function OnHit(inst, attacker, target)--MODE2 炮弹爆炸效果碰撞处理
     inst:AddComponent("explosive")
     inst.components.explosive.explosiverange = TUNING.ALICE_SHOT2_SPLASH_RADIUS
     inst.components.explosive.explosivedamage = 0
@@ -164,7 +164,7 @@ local function OnHit(inst, attacker, target)
             end
             affected_entity:Remove()
         -- 击飞可拾取物品
-        elseif affected_entity.components.inventoryitem ~= nil then
+        elseif affected_entity.components.inventoryitem ~= nil and not affected_entity:HasTag("heavy") then
             launch_away(affected_entity, position)
         elseif affected_entity.waveactive then
             affected_entity:DoSplash()
@@ -185,7 +185,7 @@ local function OnHit(inst, attacker, target)
     inst:Remove()
 end
 
-local function OnUpdateProjectile(inst)
+local function OnUpdateProjectile(inst)--MODE2 炮弹飞行过程碰撞处理
     local selfboat = inst.shooter and inst.shooter:IsValid() and inst.shooter:GetCurrentPlatform() or nil
     local x, y, z = inst.Transform:GetWorldPosition()
     local targets = TheSim:FindEntities(x, 0, z, TUNING.ALICE_SHOT2_RADIUS, nil, PROJECTILE_EXCLUDE_TAGS, PROJECTILE_MUST_ONE_OF_TAGS) -- Set y to zero to look for objects on the ground
