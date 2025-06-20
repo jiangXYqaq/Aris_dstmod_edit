@@ -438,15 +438,17 @@ function AliceGift:GiveGifts()
                     count = count,
                     dropped = not success
                 })
-
-                -- 背包满时安全掉落
+        
+                -- 背包满时安全掉落（替换不存在的 DropItem 函数）
                 if not success then
-                    self.inst:DropItem(item_inst)
+                    local x, y, z = self.inst.Transform:GetWorldPosition()
+                    -- 在玩家位置附近随机掉落
+                    item_inst.Transform:SetPosition(
+                        x + math.random() * 2 - 1,  -- X偏移：-1到1
+                        y,                           -- 保持原高度
+                        z + math.random() * 2 - 1    -- Z偏移：-1到1
+                    )
                 end
-
-            else
-                -- 生成失败时记录日志（可选）
-                -- print("[DEBUG:Alice Gift] 无法生成物品:", item.prefab)
             end
         end
     end
