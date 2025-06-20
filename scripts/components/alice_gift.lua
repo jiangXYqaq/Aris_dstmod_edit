@@ -68,10 +68,10 @@ local GIFT_ITEMS = {
         {prefab = "yellowgem", count = {min = 20, max = 40}, weight = 2}, -- 黄宝石
         {prefab = "opalpreciousgem", count = {min = 20, max = 40}, weight = 1}, -- 彩虹宝石
         {prefab = "nightmarefuel", count = {min = 20, max = 40}, weight = 10}, -- 噩梦燃料
-        {prefab = "lunarplant_kit", count = {min = 5, max = 10}, weight = 5}, -- 亮茄修补套件
-        {prefab = "voidcloth_kit", count = {min = 5, max = 10}, weight = 5}, -- 虚空修补套件
-        {prefab = "alterguardianhatshard", count = {min = 1, max = 1}, weight = 5}, -- 启迪碎片
-        {prefab = "eyeturret_item", count = {min = 1, max = 1}, weight = 5}, -- 眼睛炮塔
+
+        --由于添加了配方不再使用
+        --{prefab = "alterguardianhatshard", count = {min = 1, max = 1}, weight = 5}, -- 启迪碎片
+        
         {prefab = "shadowheart", count = {min = 1, max = 1}, weight = 10}, -- 暗影心房
         
         
@@ -79,20 +79,21 @@ local GIFT_ITEMS = {
 
     equipments = {
         --[[ 装备 ]]--
-        {prefab = "multitool_axe_pickaxe", count = {min = 1, max = 1}, weight = 10}, -- 多用斧稿
+--[[         {prefab = "multitool_axe_pickaxe", count = {min = 1, max = 1}, weight = 5}, -- 多用斧镐
         {prefab = "featherfan", count = {min = 1, max = 1}, weight = 1}, -- 羽毛扇
         {prefab = "brush", count = {min = 1, max = 1}, weight = 1}, -- 刷子
         {prefab = "icepack", count = {min = 1, max = 1}, weight = 1}, -- 保鲜背包
         {prefab = "krampus_sack", count = {min = 1, max = 1}, weight = 1}, -- 坎普斯背包
-        {prefab = "hambat", count = {min = 1, max = 1}, weight = 10}, -- 火腿棒
-        {prefab = "nightsword", count = {min = 1, max = 1}, weight = 10}, -- 暗夜剑
+        {prefab = "hambat", count = {min = 1, max = 1}, weight = 5}, -- 火腿棒
+        {prefab = "nightsword", count = {min = 1, max = 1}, weight = 5}, -- 暗夜剑
         {prefab = "ruins_bat", count = {min = 1, max = 1}, weight = 5}, -- 铥矿棒
         {prefab = "orangestaff", count = {min = 1, max = 1}, weight = 1}, -- 懒人魔杖
         {prefab = "yellowstaff", count = {min = 1, max = 1}, weight = 5}, -- 唤星者魔杖
         {prefab = "greenstaff", count = {min = 1, max = 1}, weight = 5}, -- 分解法杖
-        {prefab = "opalstaff", count = {min = 1, max = 1}, weight = 1}, -- 唤月者魔杖
-        {prefab = "panflute", count = {min = 1, max = 1}, weight = 1}, -- 排箫
-        {prefab = "waterballoon", count = {min = 10, max = 20}, weight = 10}, -- 水球
+        {prefab = "opalstaff", count = {min = 1, max = 1}, weight = 5}, -- 唤月者魔杖
+        {prefab = "eyeturret_item", count = {min = 1, max = 1}, weight = 5}, -- 眼睛炮塔
+        {prefab = "panflute", count = {min = 1, max = 1}, weight = 10}, -- 排箫
+        {prefab = "waterballoon", count = {min = 10, max = 20}, weight = 5}, -- 水球
         {prefab = "ruinshat", count = {min = 1, max = 1}, weight = 10}, -- 铥矿皇冠
         {prefab = "armordreadstone", count = {min = 1, max = 1}, weight = 1}, -- 绝望石盔甲
         {prefab = "dreadstonehat", count = {min = 1, max = 1}, weight = 1}, -- 绝望石头盔
@@ -112,9 +113,54 @@ local GIFT_ITEMS = {
         {prefab = "sword_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄剑
         {prefab = "pickaxe_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄粉碎者
         {prefab = "staff_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄魔杖
-        {prefab = "bomb_lunarplant", count = {min = 10, max = 20}, weight = 5}, -- 亮茄炸弹
+        {prefab = "bomb_lunarplant", count = {min = 10, max = 20}, weight = 10}, -- 亮茄炸弹
         {prefab = "shovel_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄锄铲
+        {prefab = "lunarplant_kit", count = {min = 5, max = 10}, weight = 5}, -- 亮茄修补套件
+        {prefab = "voidcloth_kit", count = {min = 5, max = 10}, weight = 5}, -- 虚空修补套件
         {prefab = "giftwrap", count = {min = 10, max = 20}, weight = 10}, -- 礼物包装
+        {prefab = "chestupgrade_stacksize", count = {min = 1, max = 1}, weight = 10}, -- 弹性空间升级 ]]
+        --考虑到几乎没人愿意使用该装备
+        --{prefab = "wagpunkbits_kit", count = {min = 5, max = 10}, weight = 5}, -- 自动修理机
+        {prefab = "nightsword", count = {min = 1, max = 1}, weight = 5}, -- 暗夜剑
+        {prefab = "voidcloth_umbrella", count = {min = 1, max = 1}, weight = 1}, -- 暗影伞
+        {prefab = "voidcloth_scythe", count = {min = 1, max = 1}, weight = 1}, -- 暗影收割者
+        {prefab = "icepack", count = {min = 1, max = 1}, weight = 1}, -- 保鲜背包
+        {prefab = "security_pulse_cage_full", count = {min = 1, max = 1}, weight = 1}, -- 充能火花柜
+        {prefab = "chestupgrade_stacksize", count = {min = 1, max = 1}, weight = 10}, -- 弹性空间升级
+        {prefab = "ruins_bat", count = {min = 1, max = 1}, weight = 5}, -- 铥矿棒
+        {prefab = "ruinshat", count = {min = 1, max = 1}, weight = 5}, -- 铥矿皇冠
+        {prefab = "multitool_axe_pickaxe", count = {min = 1, max = 1}, weight = 1}, -- 多用斧镐
+        {prefab = "greenstaff", count = {min = 1, max = 1}, weight = 10}, -- 分解法杖
+        {prefab = "armorskeleton", count = {min = 1, max = 1}, weight = 1}, -- 骨头盔甲
+        {prefab = "skeletonhat", count = {min = 1, max = 1}, weight = 1}, -- 骨头头盔
+        {prefab = "yellowstaff", count = {min = 1, max = 1}, weight = 5}, -- 唤星者魔杖
+        {prefab = "opalstaff", count = {min = 1, max = 1}, weight = 5}, -- 唤月者魔杖
+        {prefab = "security_pulse_cage", count = {min = 1, max = 1}, weight = 1}, -- 火花柜
+        {prefab = "hambat", count = {min = 1, max = 1}, weight = 5}, -- 火腿棒
+        {prefab = "beargerfur_sack", count = {min = 1, max = 1}, weight = 1}, -- 极地熊獾桶
+        {prefab = "greenamulet", count = {min = 1, max = 1}, weight = 1}, -- 建造护符
+        {prefab = "armordreadstone", count = {min = 1, max = 1}, weight = 1}, -- 绝望石盔甲
+        {prefab = "dreadstonehat", count = {min = 1, max = 1}, weight = 1}, -- 绝望石头盔
+        {prefab = "krampus_sack", count = {min = 1, max = 1}, weight = 1}, -- 坎普斯背包
+        {prefab = "orangestaff", count = {min = 1, max = 1}, weight = 1}, -- 懒人魔杖
+        {prefab = "giftwrap", count = {min = 10, max = 20}, weight = 10}, -- 礼物包装
+        {prefab = "shovel_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄锄铲
+        {prefab = "pickaxe_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄粉碎者
+        {prefab = "sword_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄剑
+        {prefab = "staff_lunarplant", count = {min = 1, max = 1}, weight = 1}, -- 亮茄魔杖
+        {prefab = "lunarplant_kit", count = {min = 5, max = 10}, weight = 5}, -- 亮茄修补套件
+        {prefab = "bomb_lunarplant", count = {min = 10, max = 20}, weight = 10}, -- 亮茄炸弹
+        {prefab = "yellowamulet", count = {min = 1, max = 1}, weight = 1}, -- 魔光护符
+        {prefab = "panflute", count = {min = 1, max = 1}, weight = 1}, -- 排箫
+        {prefab = "alterguardianhat", count = {min = 1, max = 1}, weight = 1}, -- 启迪之冠
+        {prefab = "brush", count = {min = 1, max = 1}, weight = 1}, -- 刷子
+        {prefab = "waterballoon", count = {min = 10, max = 20}, weight = 1}, -- 水球
+        {prefab = "staff_tornado", count = {min = 1, max = 1}, weight = 5}, -- 天气风向标
+        {prefab = "lunar_seed", count = {min = 5, max = 20}, weight = 1}, -- 天体珠宝
+        {prefab = "voidcloth_kit", count = {min = 5, max = 10}, weight = 5}, -- 虚空修补套件
+        {prefab = "eyeturret_item", count = {min = 1, max = 1}, weight = 5}, -- 眼睛炮塔
+        {prefab = "voidcloth_boomerang", count = {min = 1, max = 1}, weight = 1}, -- 阴郁回旋镖
+        {prefab = "featherfan", count = {min = 1, max = 1}, weight = 1}, -- 羽毛扇
     },
 
     foods = {
