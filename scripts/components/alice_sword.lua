@@ -94,10 +94,10 @@ function Sword:GetDamage(hit_type)
         -- 更清晰的命中类型区分
         if hit_type == "direct" then
             -- 直接命中伤害（飞行中）
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.5 + level * 1.2)
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.0 + level * 1.2)
         else
             -- 爆炸范围伤害（落地后）
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.0 + level * 2.0)
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.5 + level * 2.0)
         end
     elseif mode == 3 then
         damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (15 + level * 10)
