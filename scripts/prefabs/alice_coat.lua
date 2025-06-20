@@ -26,7 +26,7 @@ local RESISTANCES =
 
 local function OnTakeDamage(inst, amount)
     local item = inst.components.container:GetItemInSlot(1)
-    if item then
+    if item and item.components and item.components.finiteuses then
         item.components.finiteuses:Use(amount)
     end
     if inst.bramble then
@@ -218,6 +218,11 @@ local function onunequip_maid(inst, owner)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = false
     end
+
+    -- 移除免疫标签
+    owner:RemoveTag("acidrainimmune")
+    owner:RemoveTag("lunarhailprotection")
+
     owner.planarbouns = 0
 end
 
@@ -244,6 +249,11 @@ local function onequip_maid(inst, owner)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = true
     end
+
+    -- 添加免疫标签（核心效果）
+    owner:AddTag("acidrainimmune")
+    owner:AddTag("lunarhailprotection")
+
     owner.planarbouns = 20
 end
 
