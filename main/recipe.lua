@@ -179,7 +179,7 @@ AddCharacterRecipe("dread_shield",
 )
 
 -- 复合材料防护板
-AddCharacterRecipe("composite_shield",
+AddCharacterRecipe("dimensional_shield",
     {
         Ingredient("lunarplant_husk", 1),
         Ingredient("voidcloth", 1),
@@ -404,7 +404,7 @@ local xmlpack2 = {
     "wooden_shield",
     "metal_shield",
     "dread_shield",
-    "composite_shield",
+    "dimensional_shield",
     "thorn_shield",
     "shadow_shield",
 }

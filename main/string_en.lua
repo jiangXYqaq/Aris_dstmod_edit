@@ -93,10 +93,10 @@ STRINGS.RECIPE_DESC.DREAD_SHIELD = "A deep, unsettling darkness that gives a sen
 STRINGS.CHARACTERS.ALICE.DESCRIBE.DREAD_SHIELD = "Even in despair, nothing can stop Alice."
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.DREAD_SHIELD = "This shield gives off a chilling aura, but it must be incredibly sturdy."
 
-STRINGS.NAMES.COMPOSITE_SHIELD = "Dimensional Material Shield"
-STRINGS.RECIPE_DESC.COMPOSITE_SHIELD = "A powerful protective shield made from a fusion of materials."
-STRINGS.CHARACTERS.ALICE.DESCRIBE.COMPOSITE_SHIELD = "Multi-layered protection, offering Alice greater peace of mind!"
-STRINGS.CHARACTERS.GENERIC.DESCRIBE.COMPOSITE_SHIELD = "The design is ingenious, it looks very reliable."
+STRINGS.NAMES.DIMENSIONAL_SHIELD = "Dimensional Material Shield"
+STRINGS.RECIPE_DESC.DIMENSIONAL_SHIELD = "A powerful protective shield made from a fusion of materials."
+STRINGS.CHARACTERS.ALICE.DESCRIBE.DIMENSIONAL_SHIELD = "Multi-layered protection, offering Alice greater peace of mind!"
+STRINGS.CHARACTERS.GENERIC.DESCRIBE.DIMENSIONAL_SHIELD = "The design is ingenious, it looks very reliable."
 
 STRINGS.NAMES.THORN_SHIELD = "Thorn Shield"
 STRINGS.RECIPE_DESC.THORN_SHIELD = "A defensive shield that strikes back when attacked."

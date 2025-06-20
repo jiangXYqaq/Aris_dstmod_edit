@@ -657,7 +657,7 @@ local function common_postinit(inst) --客机函数
     inst.CanUpgradeWithModule = CLIENT_CanUpgradeWithModule
     inst.CanRemoveModules = CLIENT_CanRemoveModules
 end
-----------------战斗分析模块----------------
+----------------光之勇者模块----------------
 local function UpdateBuffAnim(inst)
     if inst.bufffx == nil then
         inst.bufffx = SpawnPrefab("alice_buff")

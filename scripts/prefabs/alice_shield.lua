@@ -4,7 +4,7 @@ local assets =
     Asset("ANIM", "anim/wooden_shield.zip"),
     Asset("ANIM", "anim/metal_shield.zip"),
     Asset("ANIM", "anim/dread_shield.zip"),
-    Asset("ANIM", "anim/composite_shield.zip"),
+    Asset("ANIM", "anim/dimensional_shield.zip"),
     Asset("ANIM", "anim/thorn_shield.zip"),
     Asset("ANIM", "anim/shadow_shield.zip"),
 
@@ -84,7 +84,7 @@ local shields = {
         planar = 10
     },
     {
-        name = "composite_shield", 
+        name = "dimensional_shield", 
         abs_percent = 0.8, 
         condition = 1660, 
         planar = 25
