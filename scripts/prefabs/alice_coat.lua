@@ -218,11 +218,6 @@ local function onunequip_maid(inst, owner)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = false
     end
-
-    -- 移除免疫标签
-    owner:RemoveTag("acidrainimmune")
-    owner:RemoveTag("lunarhailprotection")
-
     owner.planarbouns = 0
 end
 
@@ -249,11 +244,6 @@ local function onequip_maid(inst, owner)
         owner.AnimState:AddOverrideBuild(newskin)
         owner.is_maid = true
     end
-
-    -- 添加免疫标签（核心效果）
-    owner:AddTag("acidrainimmune")
-    owner:AddTag("lunarhailprotection")
-
     owner.planarbouns = 20
 end
 
@@ -456,6 +446,10 @@ end
 
 local function maid()
     local inst = common()
+    
+    -- 添加免疫标签（核心效果）
+    inst:AddTag("acidrainimmune")
+    inst:AddTag("lunarhailprotection")
     
     if not TheWorld.ismastersim then
         return inst
