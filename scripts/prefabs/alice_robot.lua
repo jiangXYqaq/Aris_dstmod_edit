@@ -74,7 +74,7 @@ local function ondeath(inst, data)
 end
 
 --对窃贼造成200点伤害
-local function PunishOffender(offender)
+local function PunishOffender(inst, offender)
     if offender:IsValid() and offender.components.combat then
         -- 造成200点雷电伤害
         offender.components.combat:GetAttacked(inst, 200, nil, "electric")

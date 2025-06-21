@@ -698,7 +698,7 @@ local function UpdateLightBuff(inst)
     UpdateBuffAnim(inst)
 end
 --对窃贼造成200点伤害
-local function PunishOffender(offender)
+local function PunishOffender(inst, offender)
     if offender:IsValid() and offender.components.combat then
         -- 造成200点雷电伤害
         offender.components.combat:GetAttacked(inst, 200, nil, "electric")
@@ -746,6 +746,7 @@ local function AttackOrAttacked(inst, data)
             -- 检查武器是否为cutless
             if weapon and weapon.prefab == "cutless" then
                 PunishOffender(inst, attacker)  -- 使用统一惩罚函数
+            end
         end
     end
 end
