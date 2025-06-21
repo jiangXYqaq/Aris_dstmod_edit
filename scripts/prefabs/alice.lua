@@ -697,7 +697,21 @@ local function UpdateLightBuff(inst)
     end
     UpdateBuffAnim(inst)
 end
-
+--对窃贼造成200点伤害
+local function PunishOffender(offender)
+    if offender:IsValid() and offender.components.combat then
+        -- 造成200点雷电伤害
+        offender.components.combat:GetAttacked(inst, 200, nil, "electric")
+    end
+end
+-- 通用偷窃处理函数（适用于任何实体）
+local function OnItemStolen(inst, data)
+    if data and data.thief and data.thief:IsValid() then
+        PunishOffender(inst, data.thief)  -- 使用统一惩罚函数
+    end
+end
+--模块光之勇者逻辑
+--进入战斗后每2秒获得光，30秒内没有战斗视为脱战，失去所有光。
 local function AttackOrAttacked(inst, data)
     if not inst.battle_activate then
         return
@@ -722,7 +736,20 @@ local function AttackOrAttacked(inst, data)
     inst.light_buff_task2 = inst:DoTaskInTime(30, function() -- 30s脱离战斗原10S
         inst.alc_atk_state = false
     end)
+    --处理被猴子偷的情况
+    if data and data.target == inst then  -- 只有自己被攻击时才触发
+        if data.attacker and data.attacker:IsValid() then
+            local attacker = data.attacker
+            local weapon = attacker.components.combat and 
+                           attacker.components.combat:GetWeapon()
+            
+            -- 检查武器是否为cutless
+            if weapon and weapon.prefab == "cutless" then
+                PunishOffender(inst, attacker)  -- 使用统一惩罚函数
+        end
+    end
 end
+
 
 local function OnTimerFinished(inst, data)
     if data.name == HUNGERDRAIN_TIMERNAME then
@@ -876,19 +903,7 @@ local function master_postinit(inst)
     inst:ListenForEvent("onhitother", AttackOrAttacked)
     inst:ListenForEvent("attacked", AttackOrAttacked)
     inst:ListenForEvent("lightswordshot", AttackOrAttacked)
-    inst:ListenForEvent("onitemstolen", function(inst, data)
-        -- 确保事件数据有效且小偷存在
-        if data and data.thief and data.thief:IsValid() then
-            -- 获取战斗组件
-            local combat = data.thief.components.combat
-            
-            -- 如果小偷有战斗组件，则造成伤害
-            if combat then
-                -- 造成200点雷电属性伤害，伤害来源为自身
-                combat:GetAttacked(inst, 200, nil, "electric")
-            end
-        end
-    end)
+    inst:ListenForEvent("onitemstolen", OnItemStolen)
 
     inst.components.playerlightningtarget:SetHitChance(TUNING.WX78_LIGHTNING_TARGET_CHANCE)
     inst.components.playerlightningtarget:SetOnStrikeFn(OnLightningStrike)
