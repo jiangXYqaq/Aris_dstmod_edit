@@ -283,7 +283,7 @@ function AliceShadowEmbrace:ApplyImmunityEffects()
         
         -- 立即清除现有催眠状态
         if self.inst.components.grogginess.grog_amount > 0 then
-            self.inst.components.grogginess:SetGrogginess(0)
+            self.inst.components.grogginess:ResetGrogginess()
         end
     end
 
