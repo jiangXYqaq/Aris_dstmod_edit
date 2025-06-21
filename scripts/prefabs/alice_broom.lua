@@ -411,6 +411,7 @@ local function tool_fn()
 
     inst:AddTag("nopunch")
     inst:AddTag("bramble_resistant") -- 添加 bramble_resistant 标签到装备本身
+    inst:AddTag("nosteal")
 
     inst.spelltype = "RESKIN"
 

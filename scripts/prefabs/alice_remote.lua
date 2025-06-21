@@ -557,6 +557,7 @@ local function fn()
 	inst:AddTag("engineeringbatterypowered")
 	inst:AddTag("alice_remote")
     inst:AddTag('trader')
+	inst:AddTag("nosteal")
 
 	inst.AnimState:SetBank("alice_remote")
 	inst.AnimState:SetBuild("alice_remote")

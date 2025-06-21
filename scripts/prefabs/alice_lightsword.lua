@@ -239,6 +239,7 @@ local function fn()
 	inst:AddTag("lightsword")
     inst:AddTag('trader')
     inst:AddTag("rechargeable")
+    inst:AddTag("nosteal")
 
     inst:AddComponent("aoetargeting")
     inst.components.aoetargeting.shouldrepeatcastfn = function() return true end

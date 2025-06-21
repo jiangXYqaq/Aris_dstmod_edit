@@ -308,6 +308,19 @@ local function fn()
 
     inst:ListenForEvent("death", ondeath)
     inst:ListenForEvent("onclose", CheckForMorph)
+    inst:ListenForEvent("onitemstolen", function(inst, data)
+        -- 确保事件数据有效且小偷存在
+        if data and data.thief and data.thief:IsValid() then
+            -- 获取战斗组件
+            local combat = data.thief.components.combat
+            
+            -- 如果小偷有战斗组件，则造成伤害
+            if combat then
+                -- 造成200点雷电属性伤害，伤害来源为自身
+                combat:GetAttacked(inst, 200, nil, "electric")
+            end
+        end
+    end)
 
 	inst.OnLoad = OnLoad
 	inst.OnSave = OnSave

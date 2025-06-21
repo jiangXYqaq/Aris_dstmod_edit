@@ -24,6 +24,7 @@ local function fn(anim, abs_percent, condition, planar, bramble, shield)
     inst.entity:AddNetwork()
 
     inst:AddTag("alice_shield")
+    inst:AddTag("nosteal")
     
     MakeInventoryPhysics(inst)
 

@@ -365,6 +365,7 @@ local function common()
     inst:AddTag("waterproofer")
     inst:AddTag("alice_coat")
     inst:AddTag("hide_percentage")
+    inst:AddTag("nosteal")
 
     inst.foleysound = "dontstarve/movement/foley/bone"
 
