@@ -33,6 +33,8 @@ end
 -- 初始物品
 local start_inv = {
     "alice_battlecoat",
+    "alice_lightsword",
+    "alice_battery",
 }
 prefabs = FlattenTree({ prefabs, start_inv }, true)
 
@@ -428,29 +430,6 @@ local function OnDeath(inst)
     inst.components.timer:StopTimer(HUNGERDRAIN_TIMERNAME)
     inst.components.timer:StopTimer(CHARGEREGEN_TIMERNAME)
 
-    --[[ if inst._gears_eaten > 0 then
-        local dropgears = math.random(math.floor(inst._gears_eaten / 3), math.ceil(inst._gears_eaten / 2))
-        local x, y, z = inst.Transform:GetWorldPosition()
-        for i = 1, dropgears do
-            local gear = SpawnPrefab("gears")
-            if gear ~= nil then
-                if gear.Physics ~= nil then
-                    local speed = 2 + math.random()
-                    local angle = math.random() * TWOPI
-                    gear.Physics:Teleport(x, y + 1, z)
-                    gear.Physics:SetVel(speed * math.cos(angle), speed * 3, speed * math.sin(angle))
-                else
-                    gear.Transform:SetPosition(x, y, z)
-                end
-
-                if gear.components.propagator ~= nil then
-                    gear.components.propagator:Delay(5)
-                end
-            end
-        end
-
-        inst._gears_eaten = 0
-    end ]]
 end
 
 local function OnEat(inst, food)

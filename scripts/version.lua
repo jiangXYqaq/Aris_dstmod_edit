@@ -1,7 +1,7 @@
 return {
     MAJOR = 1,
-    MINOR = 3,
-    PATCH = 4, -- Updated patch version for the latest release
+    MINOR = 4,
+    PATCH = 0, -- Updated patch version for the latest release
     SUFFIX = "dev" -- Stable release
     --[[ 
 new feat:
