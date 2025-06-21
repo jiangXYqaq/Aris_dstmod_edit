@@ -1,3 +1,4 @@
+--此模块可能处理模式4的攻击逻辑
 local assets =
 {
 	Asset("ANIM", "anim/jiguang2.zip"),
@@ -110,6 +111,9 @@ local function fn()
 
 	inst:AddComponent("weapon")
 	inst.components.weapon:SetDamage(10)
+
+	inst:AddComponent("planardamage")
+	inst.components.planardamage:SetBaseDamage(15) -- 默认值，可被后续逻辑覆盖
 
 	inst.SetFlamethrowerAttacker = SetFlamethrowerAttacker
 	inst.KillFX = KillFX

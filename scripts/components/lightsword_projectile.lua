@@ -1,3 +1,4 @@
+--此模块可能仅处理模式1和模式3的攻击逻辑
 local MATH = require "alice_utils.math"
 local Polygon = MATH.Polygon
 
@@ -129,11 +130,11 @@ function LightSword_projectile:Attack(target)
 
     if IsNotDead(target) then
         local weapon = self.owner
-        local defaultdamage = weapon.components.alice_sword:GeDamage()
+        local defaultdamage = weapon.components.alice_sword:GetDamage()
         local damage = defaultdamage * externaldamagemultipliers
 
         if self.player.components.combat and self.player.components.combat.customdamagemultfn then
-            damage = damage * self.player.components.combat.customdamagemultfn(self.player, target)
+            damage = damage * self.player.components.combat.customdamagemultfn(self.player)
         end
         local stimuli = nil
         if self.lightatk or self.player.components.electricattacks ~= nil then

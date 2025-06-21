@@ -10,7 +10,7 @@ local assets=
 
 local prefabs = {}
 
-local SHIELD_DURATION = 10 * FRAMES
+local SHIELD_DURATION = 25 * FRAMES --max 30
 local SHIELD_VARIATIONS = 3
 local MAIN_SHIELD_CD = 1.2
 
@@ -26,7 +26,7 @@ local RESISTANCES =
 
 local function OnTakeDamage(inst, amount)
     local item = inst.components.container:GetItemInSlot(1)
-    if item then
+    if item and item.components and item.components.finiteuses then
         item.components.finiteuses:Use(amount)
     end
     if inst.bramble then
@@ -74,10 +74,10 @@ local function OnResistDamage(inst)--, damage)
     inst.task = inst:DoTaskInTime(SHIELD_DURATION, OnShieldOver, OnResistDamage)
     inst.components.resistance:SetOnResistDamageFn(nil)
 
-    local slotitem = inst.components.container:GetItemInSlot(1)
-    if slotitem then
+    --local slotitem = inst.components.container:GetItemInSlot(1)
+    --[[ if slotitem then
         slotitem.components.finiteuses:Use(1)
-    end
+    end ]]
         
     if inst.components.cooldown.onchargedfn ~= nil then
         inst.components.cooldown:StartCharging()
@@ -249,6 +249,14 @@ end
 
 local function OnShieldLoaded(inst, data)
     if data and data.item then
+        inst.shield_prefab = data.item.prefab
+        local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+        if owner then
+            owner:PushEvent("alice_coat_shield_loaded", {
+                item = data.item,
+                container = inst
+            })
+        end
         inst.components.armor:InitIndestructible(data.item.abs_percent)
         if data.item.planar then
             inst.components.planardefense:SetBaseDefense(data.item.planar)
@@ -259,10 +267,13 @@ local function OnShieldLoaded(inst, data)
         end
 
         if data.item.shield then
+           
             inst.shield = true
             inst.components.cooldown.onchargedfn = OnChargedFn
             inst.lastmainshield = 0
-            inst.components.cooldown:StartCharging(math.max(TUNING.ARMOR_SKELETON_FIRST_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
+            --inst.components.cooldown:StartCharging(math.max(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
+            inst.components.cooldown:StartCharging(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN)
+            
         end
 
         if data.item.prefab == "dread_shield" then
@@ -273,7 +284,7 @@ local function OnShieldLoaded(inst, data)
 
             if data.item.restoretask == nil then
                 data.item.restoretask = data.item:DoPeriodicTask(1,function()
-                    local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+                    --local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
                     if owner and owner.components.sanity then
                         local old = data.item.components.finiteuses:GetUses()
                         local max = data.item.components.finiteuses.total
@@ -299,6 +310,19 @@ local function OnShieldUnloaded(inst, data)
     inst.components.planardefense:SetBaseDefense(0)
     inst.bramble = false
     inst.shield = false
+
+    local prev_prefab = inst.shield_prefab
+    -- 推送事件给玩家
+    if prev_prefab then
+        local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+        if owner then
+            owner:PushEvent("alice_coat_shield_unloaded", {
+                prefab = prev_prefab,
+                container = inst
+            })
+        end
+    end
+    
     
     inst.components.cooldown.onchargedfn = nil
     if inst.task ~= nil then
@@ -365,7 +389,8 @@ local function common()
     inst.components.resistance:SetOnResistDamageFn(OnResistDamage)
     
     inst:AddComponent("cooldown")
-    inst.components.cooldown.cooldown_duration = TUNING.ARMOR_SKELETON_COOLDOWN
+    inst.components.cooldown.cooldown_duration = TUNING.ALICE_SHADOW_SHIELD_COOLDOWN
+    --print("[DEBUG]Cooldown duration:", inst.components.cooldown.cooldown_duration)
 
     inst:AddComponent("armor")
     inst.components.armor:InitIndestructible(0)
@@ -383,6 +408,7 @@ local function common()
     inst:AddComponent("container")
 	inst.components.container.canbeopened = true
     inst.components.container.stay_open_on_hide = true
+    inst.shield_prefab = nil
     inst:ListenForEvent("itemget", OnShieldLoaded)
     inst:ListenForEvent("itemlose", OnShieldUnloaded)
 
@@ -420,6 +446,10 @@ end
 
 local function maid()
     local inst = common()
+    
+    -- 添加免疫标签（核心效果）
+    inst:AddTag("acidrainimmune")
+    inst:AddTag("lunarhailprotection")
     
     if not TheWorld.ismastersim then
         return inst

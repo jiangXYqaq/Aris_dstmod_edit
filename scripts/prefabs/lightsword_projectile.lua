@@ -1,3 +1,4 @@
+--此模块处理模式2攻击逻辑和模式1234实体创建
 local assets =
 {
     Asset("ANIM", "anim/cannonball_rock.zip"),
@@ -13,7 +14,7 @@ local prefabs =
 
 local Utils = require("alice_utils/utils")
 local PROJECTILE_MUST_ONE_OF_TAGS = { "_combat", "_health", "blocker" }
-local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player" }
+local PROJECTILE_EXCLUDE_TAGS = { "INLIMBO", "notarget", "noattack", "invisible", "playerghost", "player", "companion" }
 
 local ONHIT_MUST_ONE_OF_TAGS = { "oceanfishable", "kelp", "_inventoryitem", "wave", "_workable" }
 
@@ -63,7 +64,11 @@ local function LaunchSound(inst)
     inst.SoundEmitter:PlaySound("monkeyisland/cannon/shoot")
 end
 
-local function OnHit(inst, attacker, target)
+local function OnHit(inst, attacker, target)--MODE2 炮弹爆炸效果碰撞处理
+    inst:AddComponent("explosive")
+    inst.components.explosive.explosiverange = TUNING.ALICE_SHOT2_SPLASH_RADIUS
+    inst.components.explosive.explosivedamage = 0
+    inst.components.explosive.lightonexplode = false
     if not (attacker or attacker.components.combat) then
         return
     end
@@ -73,7 +78,15 @@ local function OnHit(inst, attacker, target)
         local ents = TheSim:FindEntities(pos.x, 0, pos.z, TUNING.ALICE_SHOT2_SPLASH_RADIUS, AOE_TARGET_TAGS, AREAATTACK_EXCLUDE_TAGS)
 		for _, target in ipairs(ents) do    
 			if target ~= attacker and target:IsValid() and not target:IsInLimbo() and not (target.components.health and target.components.health:IsDead()) then
-                local damage = weapon.components.alice_sword:GeDamage(false)
+                local damage = weapon.components.alice_sword:GetDamage("splash")
+                -- 添加外部伤害倍率
+                local externaldamagemultipliers = (attacker.components.combat and attacker.components.combat.externaldamagemultipliers:Get()) or 1
+                damage = damage * externaldamagemultipliers
+                
+                -- 添加暴击计算 (关键修复!)
+                if attacker.components.combat and attacker.components.combat.customdamagemultfn then
+                    damage = damage * attacker.components.combat.customdamagemultfn(attacker)
+                end
                 local stimuli = nil
                 if attacker.components.electricattacks ~= nil then
                     stimuli = "electric"
@@ -151,12 +164,14 @@ local function OnHit(inst, attacker, target)
             end
             affected_entity:Remove()
         -- 击飞可拾取物品
-        elseif affected_entity.components.inventoryitem ~= nil then
+        elseif affected_entity.components.inventoryitem ~= nil and not affected_entity:HasTag("heavy") then
             launch_away(affected_entity, position)
         elseif affected_entity.waveactive then
             affected_entity:DoSplash()
         elseif affected_entity.components.workable then -- 破坏建筑
             affected_entity.components.workable:Destroy(inst)
+        elseif affected_entity.components.workable and affected_entity.components.workable:RequiresToughWork() then
+            inst.components.explosive:OnBurnt()
         end
     end
 
@@ -170,7 +185,7 @@ local function OnHit(inst, attacker, target)
     inst:Remove()
 end
 
-local function OnUpdateProjectile(inst)
+local function OnUpdateProjectile(inst)--MODE2 炮弹飞行过程碰撞处理
     local selfboat = inst.shooter and inst.shooter:IsValid() and inst.shooter:GetCurrentPlatform() or nil
     local x, y, z = inst.Transform:GetWorldPosition()
     local targets = TheSim:FindEntities(x, 0, z, TUNING.ALICE_SHOT2_RADIUS, nil, PROJECTILE_EXCLUDE_TAGS, PROJECTILE_MUST_ONE_OF_TAGS) -- Set y to zero to look for objects on the ground
@@ -185,9 +200,17 @@ local function OnUpdateProjectile(inst)
                 if not is_wall or is_wall and on_other_boat then
                     local attacker = inst.components.complexprojectile.attacker or inst
                     local weapon = Utils.FindEquipWithTag(attacker, "lightsword")
-                    local damage = 68
+                    local damage = TUNING.ALICE_LIGHTSWORD_DAMAGE
                     if weapon then
-                        damage = weapon.components.alice_sword:GeDamage(true)
+                        damage = weapon.components.alice_sword:GetDamage("direct")
+                        -- 添加外部伤害倍率
+                        local externaldamagemultipliers = (attacker.components.combat and attacker.components.combat.externaldamagemultipliers:Get()) or 1
+                        damage = damage * externaldamagemultipliers
+                        
+                        -- 添加暴击计算 (关键修复!)
+                        if attacker.components.combat and attacker.components.combat.customdamagemultfn then
+                            damage = damage * attacker.components.combat.customdamagemultfn(attacker)
+                        end
                     end
                     local stimuli = nil
                     if attacker.components.electricattacks ~= nil then
@@ -252,6 +275,8 @@ end
 local function cannonball_maseter(inst)
     inst.persists = false
 
+    inst:AddTag("toughworker")
+	inst:AddTag("explosive")
     inst:AddComponent("complexprojectile")
 
     inst.components.complexprojectile:SetHorizontalSpeed(25) --水平速度
@@ -272,7 +297,7 @@ local function cannonball_maseter(inst)
 end
 
 -- 击中效果
-local function OnHit_laser(target)
+local function OnHit_shot3(target)
     if target and target:IsValid() then
         SpawnPrefab("alterguardian_laserhit"):SetTarget(target)
     end
@@ -308,9 +333,9 @@ local function masterfn(inst)
     inst:AddComponent("lightsword_projectile")
 end
 
-local function laser_master(inst)
+local function shot3_master(inst) -- Renamed from laser_master
     masterfn(inst)
-	inst.components.lightsword_projectile:SetOnHitFn(OnHit_laser)
+	inst.components.lightsword_projectile:SetOnHitFn(OnHit_shot3)
 end
 
 local function shot1_master(inst)
@@ -447,7 +472,7 @@ return
     MakeProjectile("alice_shot3", {
         anim = {bank = "alice_shot_fx", build = "alice_shot_fx", anim = "idle", onground = false},
         assets = assets,
-        masterfn = laser_master,
+        masterfn = shot3_master, -- Updated reference
         commonfn = commonfn,
         maxhits = math.huge,
         speed = 200,

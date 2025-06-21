@@ -179,7 +179,7 @@ AddCharacterRecipe("dread_shield",
 )
 
 -- 复合材料防护板
-AddCharacterRecipe("composite_shield",
+AddCharacterRecipe("dimensional_shield",
     {
         Ingredient("lunarplant_husk", 1),
         Ingredient("voidcloth", 1),
@@ -194,10 +194,10 @@ AddCharacterRecipe("composite_shield",
 -- 针刺防护板
 AddCharacterRecipe("thorn_shield",
     {
-        Ingredient("livinglog", 2),
-        Ingredient("stinger", 4),
+        Ingredient("transistor", 1),
+        Ingredient("stinger", 2),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
     },
@@ -208,23 +208,89 @@ AddCharacterRecipe("thorn_shield",
 AddCharacterRecipe("shadow_shield",
     {
         Ingredient("nightmarefuel", 12),
+        Ingredient("skeletonhat", 1),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
     },
     {"MODS", "WEAPONS"}
 )
 
-AddCharacterRecipe("wx78module_alc_charge",
+-- 添加烂电线配方 (金块+树枝)
+AddRecipe2(
+    "alice_trinket_6",  -- 配方名称添加前缀
     {
-        Ingredient("nightmarefuel", 4),
+        Ingredient("goldnugget", 4),
+        Ingredient("twigs", 8)
     },
-    TECH.LOST,
+    TECH.NONE,
     {
-        builder_tag = "alice",
+        product = "trinket_6",  -- 输出物品
+        numtogive = 4           -- 产出数量
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "CHARACTER"}  -- 标签
+)
+
+-- 添加废料配方 (烂电线+燧石)
+AddRecipe2(
+    "alice_wagpunk_bits",
+    {
+        Ingredient("trinket_6", 3),
+        Ingredient("flint", 5)
+    },
+    TECH.NONE,
+    {
+        product = "wagpunk_bits",
+        numtogive = 4
+    },
+    {"MODS", "CHARACTER"}
+)
+
+-- 添加电子元件配方 (烂电线+石砖)
+AddRecipe2(
+    "alice_transistor",
+    {
+        Ingredient("trinket_6", 2),
+        Ingredient("cutstone", 4)
+    },
+    TECH.NONE,
+    {
+        product = "transistor",
+        numtogive = 4
+    },
+    {"MODS", "CHARACTER"}
+)
+
+-- 添加齿轮配方 (2废料+2石砖)
+AddRecipe2(
+    "alice_gears",  -- 配方名称添加前缀
+    {
+        Ingredient("wagpunk_bits", 2),
+        Ingredient("cutstone", 2)
+    },
+    TECH.NONE,
+    {
+        product = "gears",
+        numtogive = 1
+    },
+    {"MODS", "CHARACTER"}
+)
+
+-- 添加启迪之冠碎片配方
+AddRecipe2(
+    "alice_alterguardianhatshard",  -- 配方名称（添加alice前缀）
+    {
+        Ingredient("purebrilliance", 2),  -- 2纯粹辉煌
+        Ingredient("bluegem", 1),         -- 1蓝宝石
+        Ingredient("moonrocknugget", 3)   -- 3月岩
+    },
+    TECH.LOST,  -- 指定为LOST科技等级
+    {
+        product = "alterguardianhatshard",  -- 产出物品
+        numtogive = 1                       -- 产出数量
+    },
+    {"MODS", "CHARACTER"}  -- 标签
 )
 
 -- 充能电路
@@ -282,7 +348,7 @@ AddCharacterRecipe("alice_remote",
         Ingredient("wagpunk_bits", 1),
         Ingredient("transistor", 4),
     },
-    TECH.LOST,
+    TECH.NONE,
     {
         builder_tag = "alice",
         atlas = "images/inventoryimages/alice_remote.xml",
@@ -338,7 +404,7 @@ local xmlpack2 = {
     "wooden_shield",
     "metal_shield",
     "dread_shield",
-    "composite_shield",
+    "dimensional_shield",
     "thorn_shield",
     "shadow_shield",
 }

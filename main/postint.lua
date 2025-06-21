@@ -278,31 +278,6 @@ AddComponentPostInit("upgrademoduleowner", function(self, inst)
 	end
 end)
 
--------------------------------------------------------
---------------------  扫帚地图传送  --------------------
--------------------------------------------------------
--- 客户端判断（仅本地玩家视角）
--- 判断某个位置是否被特定玩家探索过（客户端使用）未生效
---[[ local function IsPositionExplored(player, pos)
-    if player and pos then
-        local x, z = pos.x, pos.z
-		if player.HUD 
-            and player.HUD.controls 
-            and player.HUD.controls.mapcontrols 
-            and player.HUD.controls.mapcontrols.map then
-            
-            local is_visible = player.HUD.controls.mapcontrols.map:IsVisible(x, z)
-            print(string.format("[Debug] IsPositionExplored: Player: %s, Position: (%.2f, %.2f), IsVisible: %s", player.prefab or "unknown", x, z, tostring(is_visible)))
-            return is_visible
-        else
-            print("[Debug] IsPositionExplored: MiniMap or HUD is missing for player:", player.prefab or "unknown")
-        end
-    else
-        print("[Debug] IsPositionExplored: Invalid parameters. Player:", player, "Position:", pos)
-    end
-    return false
-end ]]
-
 -- 绑定右键动作（客户端发起）
 AddComponentPostInit("playercontroller", function(self)
     local old_GetMapActions = self.GetMapActions
@@ -323,3 +298,16 @@ AddComponentPostInit("playercontroller", function(self)
         return LMB, RMB
     end
 end)
+
+--[[ -- GIFT功能（服务器端）
+if TheNet and TheNet:GetIsServer() then
+    AddSimPostInit(function()
+        AddPlayerPostInit(function(inst)
+            -- 安全地添加事件监听
+            if inst:IsValid() then
+                inst:ListenForEvent("newstate", OnPlayerActivated)
+                OnPlayerActivated(inst)
+            end
+        end)
+    end)
+end ]]

@@ -40,10 +40,9 @@ AddClassPostConstruct("widgets/controls", function(self)
     
 end)
 
-local stringkey = TUNING.LIGHTSWORD_KEY or KEY_E
-local key = _G[stringkey]
-local EX_MODE_KEY = TUNING.EX_MODE_KEY or KEY_R
-local ex_key = _G[EX_MODE_KEY]
+
+local ex_key = TUNING.EX_MODE_KEY
+local gift_key = TUNING.ALICE_GIFT_KEY
 
 --更换武器准星
 AddClientModRPCHandler("alice", "updataaoereticule", function(num)
@@ -158,10 +157,10 @@ end)
 
 AddModRPCHandler("alice", "teleport", function(player, x, z)
     if player and player.Transform then
-        print("[Debug] RPC: Teleporting player to", x, z) -- Debug log
+        --print("[Debug] RPC: Teleporting player to", x, z) -- Debug log
         player.Transform:SetPosition(x, 0, z)
     else
-        print("[Debug] RPC: Failed to teleport player. Invalid player or position.") -- Debug log
+        --print("[Debug] RPC: Failed to teleport player. Invalid player or position.") -- Debug log
     end
 end)
 
@@ -178,11 +177,11 @@ local function OnRefuseItem(inst, giver, item)
     end
 end
 
---新增EX键，快速切换到EX模式，无需打开UI。
+-- EX模式切换监听
 AddClassPostConstruct("widgets/controls", function(self)
     if self.owner then
-        -- EX模式切换监听
-        if self.ex_mode_handler == nil then
+        -- 只在功能启用时添加监听器
+        if self.ex_mode_handler == nil and ex_key ~= false then
             self.ex_mode_handler = TheInput:AddKeyHandler(function(key, down)
                 if down and key == ex_key then
                     if ThePlayer and not ThePlayer:HasTag("playerghost") then
@@ -234,5 +233,49 @@ AddClientModRPCHandler("alice", "updatesound", function()
 
     if TheFrontEnd then
         TheFrontEnd:GetSound():PlaySound("alicesound/alicesound/UI_LevelUp")
+    end
+end)
+
+if TheNet and TheNet:GetIsServer() then
+    -- 延迟到世界准备好
+    AddSimPostInit(function()
+        -- 初始化玩家组件
+        AddPlayerPostInit(function(inst)
+            -- 确保不是客户端控制的玩家实体
+            if inst ~= ThePlayer then
+                if not inst.components.alice_gift then
+                    inst:AddComponent("alice_gift")
+                end
+                
+                -- 按键处理事件监听
+                inst:ListenForEvent("alice_gift_trigger", function()
+                    if inst.components.alice_gift and inst.components.alice_gift:CheckCooldown() then
+                        inst.components.alice_gift:GiveGifts()
+                        inst.components.alice_gift:UpdateCooldown()
+                    end
+                end)
+            end
+        end)
+    end)
+end
+
+-- 礼物功能按键监听
+local key_handler_added = false
+
+AddClassPostConstruct("widgets/controls", function(self)
+    -- 只在功能启用且未添加过监听器时执行
+    if not key_handler_added and self.owner == ThePlayer and gift_key ~= false then
+        self.gift_key_handler = TheInput:AddKeyHandler(function(key, down)
+            if down and key == gift_key then
+                SendModRPCToServer(MOD_RPC["alice_gift"]["request_gift"])
+            end
+        end)
+        key_handler_added = true
+    end
+end)
+
+AddModRPCHandler("alice_gift", "request_gift", function(player)
+    if player and player:IsValid() and player.components.alice_gift then
+        player:PushEvent("alice_gift_trigger")
     end
 end)

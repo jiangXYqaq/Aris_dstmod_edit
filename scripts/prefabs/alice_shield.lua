@@ -4,7 +4,7 @@ local assets =
     Asset("ANIM", "anim/wooden_shield.zip"),
     Asset("ANIM", "anim/metal_shield.zip"),
     Asset("ANIM", "anim/dread_shield.zip"),
-    Asset("ANIM", "anim/composite_shield.zip"),
+    Asset("ANIM", "anim/dimensional_shield.zip"),
     Asset("ANIM", "anim/thorn_shield.zip"),
     Asset("ANIM", "anim/shadow_shield.zip"),
 
@@ -44,10 +44,12 @@ local function fn(anim, abs_percent, condition, planar, bramble, shield)
     inst.bramble = bramble
     inst.shield = shield
     
-    inst:AddComponent("finiteuses")
-    inst.components.finiteuses:SetMaxUses(condition)
-    inst.components.finiteuses:SetUses(condition)
-    inst.components.finiteuses:SetOnFinished(OnFinished)
+    if not inst.shield then
+        inst:AddComponent("finiteuses")
+        inst.components.finiteuses:SetMaxUses(condition)
+        inst.components.finiteuses:SetUses(condition)
+        inst.components.finiteuses:SetOnFinished(OnFinished)
+    end
 
     inst:AddComponent("inspectable")
 
@@ -55,6 +57,7 @@ local function fn(anim, abs_percent, condition, planar, bramble, shield)
 	inst.components.inventoryitem.atlasname = "images/inventoryimages/alice_shield.xml"
 	inst.components.inventoryitem.imagename = anim
 
+    --这部分没有意义，如果想要叠加装备多个防护板，可能需要设置为简单的耐久叠加。
     inst:AddComponent("stackable")
     inst.components.stackable.maxsize = TUNING.STACK_SIZE_LARGEITEM
     
@@ -81,7 +84,7 @@ local shields = {
         planar = 10
     },
     {
-        name = "composite_shield", 
+        name = "dimensional_shield", 
         abs_percent = 0.8, 
         condition = 1660, 
         planar = 25
@@ -90,13 +93,11 @@ local shields = {
         name = "thorn_shield", 
         abs_percent = 0.85, 
         condition = 1050, 
-        planar = 15, 
-        bramble = 10
+        bramble = 3 --not working
     },
     {
         name = "shadow_shield", 
         abs_percent = 0, 
-        condition = 40, 
         shield = true
     },
 }

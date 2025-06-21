@@ -1,5 +1,4 @@
 GLOBAL.setmetatable(env,{__index=function(t,k) return GLOBAL.rawget(GLOBAL,k) end})
---Aris 的专属3个电路的配置。加起来刚好占用6个槽位。目前改为一共3槽位，但多个装备可能导致bug
 local wx78_moduledefs = require("wx78_moduledefs")
 local module_definitions = wx78_moduledefs.module_definitions
 local AddCreatureScanDataDefinition = wx78_moduledefs.AddCreatureScanDataDefinition
@@ -10,23 +9,153 @@ local getprefab = require("alice_utils/getprefab")
 ---------------------------------------------
 -------------------强化魔法-------------------
 ---------------------------------------------
+local function maxhealth_change(inst, wx, amount, isloading)
+    if wx.components.health ~= nil then
+        local current_health_percent = wx.components.health:GetPercent()
 
-local function magic_activate(inst, wx)
-    if wx.alc_baojilv then
-        wx.alc_baojilv = wx.alc_baojilv + 0.2 --暴击率提升20%
+        wx.components.health.maxhealth = wx.components.health.maxhealth + amount
+
+        if not isloading then
+            wx.components.health:SetPercent(current_health_percent)
+
+            -- We want to force a badge pulse, but also maintain the health percent as much as we can.
+            local badgedelta = (amount > 0 and 0.01) or -0.01
+            wx.components.health:DoDelta(badgedelta, false, nil, true)
+        end
     end
 end
 
+local function maxhunger_change(inst, wx, amount, isloading)
+    if wx.components.hunger ~= nil then
+        local current_hunger_percent = wx.components.hunger:GetPercent()
+        wx.components.hunger.max = wx.components.hunger.max + amount
+        
+        if not isloading then
+            wx.components.hunger:SetPercent(current_hunger_percent)
+            local badgedelta = (amount > 0 and 0.01) or -0.01
+            wx.components.hunger:DoDelta(badgedelta)
+        end
+    end
+end
+
+local function maxsanity_change(inst, wx, amount, isloading)
+    if wx.components.sanity ~= nil then
+        local current_sanity_percent = wx.components.sanity:GetPercent()
+        wx.components.sanity.max = wx.components.sanity.max + amount
+        
+        if not isloading then
+            wx.components.sanity:SetPercent(current_sanity_percent)
+            local badgedelta = (amount > 0 and 0.01) or -0.01
+            wx.components.sanity:DoDelta(badgedelta)
+        end
+    end
+end
+
+local function magic_tick(wx)
+    if wx.components.health then
+        wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
+    end
+    
+    if wx.components.sanity then
+        wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
+    end
+end
+
+-- 温度舒适范围常量
+local COMFORT_MIN_TEMP = 5
+local COMFORT_MAX_TEMP = 65
+
+-- 记录原始温度范围的函数
+local function record_original_temps(wx)
+    if not wx._original_temp_min then
+        wx._original_temp_min = wx.components.temperature.mintemp
+    end
+    if not wx._original_temp_max then
+        wx._original_temp_max = wx.components.temperature.maxtemp
+    end
+end
+
+-- 恢复原始温度范围的函数
+local function restore_original_temps(wx)
+    if wx._original_temp_min then
+        wx.components.temperature.mintemp = wx._original_temp_min
+        wx._original_temp_min = nil
+    end
+    if wx._original_temp_max then
+        wx.components.temperature.maxtemp = wx._original_temp_max
+        wx._original_temp_max = nil
+    end
+end
+
+local function magic_activate(inst, wx)
+    if wx.alc_baojilv then
+        wx.alc_baojilv = wx.alc_baojilv + TUNING.ALICE_MAGIC_CHANCE --暴击率提升20%
+    end
+
+    if wx.alc_baojizhi then
+        wx.alc_baojizhi = wx.alc_baojizhi + TUNING.ALICE_MAGIC_VALUE
+    end 
+    maxhealth_change(inst, wx, TUNING.MAGIC_MAXHEALTH_BOOST, isloading)
+    maxhunger_change(inst, wx, TUNING.MAGIC_MAXHUNGER_BOOST, isloading)
+    maxsanity_change(inst, wx, TUNING.MAGIC_MAXSANITY_BOOST, isloading)
+
+    -- 新增饥饿燃烧速率修改（减慢）
+    if wx.components.hunger and wx.components.hunger.burnratemodifiers then
+        wx.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.MAGIC_HUNGER_BURN_SLOW_PERCENT)
+    end
+
+     -- 添加自动回复效果
+    if not wx._magic_tick_task then
+        wx._magic_tick_task = wx:DoPeriodicTask(TUNING.MAGIC_REGEN_INTERVAL, magic_tick, nil, wx)
+    end
+
+     -- 温度限制 - 仅在组件存在时执行
+     if wx.components.temperature then
+        -- 记录原始温度范围
+        record_original_temps(wx)
+        
+        -- 设置舒适温度范围
+        wx.components.temperature.mintemp = COMFORT_MIN_TEMP
+        wx.components.temperature.maxtemp = COMFORT_MAX_TEMP
+        
+    end
+end
+
+
+
 local function magic_deactivate(inst, wx)
     if wx.alc_baojilv then
-        wx.alc_baojilv = wx.alc_baojilv - 0.2
+        wx.alc_baojilv = wx.alc_baojilv - TUNING.ALICE_MAGIC_CHANCE
+    end
+
+    if wx.alc_baojizhi then
+        wx.alc_baojizhi = wx.alc_baojizhi - TUNING.ALICE_MAGIC_VALUE
+    end 
+    maxhealth_change(inst, wx, -TUNING.MAGIC_MAXHEALTH_BOOST)
+    maxhunger_change(inst, wx, -TUNING.MAGIC_MAXHUNGER_BOOST)
+    maxsanity_change(inst, wx, -TUNING.MAGIC_MAXSANITY_BOOST)
+
+    -- 移除饥饿燃烧速率修改
+    if wx.components.hunger and wx.components.hunger.burnratemodifiers then
+        wx.components.hunger.burnratemodifiers:RemoveModifier(inst)
+    end
+
+    -- 移除自动回复效果
+    if wx._magic_tick_task then
+        wx._magic_tick_task:Cancel()
+        wx._magic_tick_task = nil
+    end
+
+    -- 恢复原始温度范围
+    if wx.components.temperature then
+        restore_original_temps(wx)
     end
 end
 
 local MAGIC_MODULE_DATA =
 {
     name = "alc_magic",
-    slots = 1,
+    slots = 2,
     activatefn = magic_activate,
     deactivatefn = magic_deactivate,
 }
@@ -74,7 +203,7 @@ end
 local BATTLE_MODULE_DATA =
 {
     name = "alc_battle",
-    slots = 1,
+    slots = 3,
     activatefn = battle_activate,
     deactivatefn = battle_deactivate,
 }

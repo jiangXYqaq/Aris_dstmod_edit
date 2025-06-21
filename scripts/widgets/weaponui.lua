@@ -131,9 +131,21 @@ local button_data = {
 }
 
 function WeaponUI:Initdata()
-    local key = _G[TUNING.LIGHTSWORD_KEY]
+    local key_name = "禁用"  -- 默认显示"禁用"
+    
+    -- 如果功能启用，获取按键名称
+    if TUNING.LIGHTSWORD_KEY ~= false then
+        -- 从键常量反向查找键名
+        for k, v in pairs(_G) do
+            if type(k) == "string" and k:find("KEY_") and v == TUNING.LIGHTSWORD_KEY then
+                key_name = k:gsub("KEY_", "")  -- 去掉"KEY_"前缀
+                break
+            end
+        end
+    end
+    
     self.data = {
-        key = STRINGS.UI.CONTROLSSCREEN.INPUTS[1][key],
+        key = key_name,  -- 显示按键名称或"禁用"
         shotlevel = 0,
         powerlevel = 0,
         exlevel = 0,
@@ -161,25 +173,30 @@ local function GetSkillString(damage, flydamage, mode)
     return stringdata[mode]["string"]
 end
 
-local maxlevel = {10, 4, 5, 5}
+local maxlevel = {5, 5, 5, 1}
 
 local function GetString(level, mode)
     if mode then
         level = math.min(maxlevel[mode], level)
     end
     local damagedata = {
+        -- 模式1: 连射模式 (200%伤害成长)
         {
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (0.5 + level * 0.1) / 68 * 100,
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.7),
         },
+        -- 模式2: 能量炮弹 (区分命中类型)
         {
-            flydamage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.5) / 68 * 100,
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.25) / 68 * 100,
+            flydamage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.5 + level * 1.2),    -- 直接命中
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.0 + level * 2.0),       -- 爆炸范围
         },
+        -- 模式3: EX技能 (超高倍率)
         {
-            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.5 + level * 0.5) / 68 * 100,
+            damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (25 + level * 10),
         },
+        -- 模式4: 高能激光刀刃 (独立常数)
         {
-            damage = TUNING.ALICE_LASERTHROW_PLANAR_DAMAGE_MIN + TUNING.ALICE_LASERTHROW_PLANAR_DAMAGE_UP * level,
+            damage = TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_BASE 
+                   + TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_PER_LEVEL * level,
         },
     }
     local damage = damagedata[mode]["damage"]

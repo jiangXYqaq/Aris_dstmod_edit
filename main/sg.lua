@@ -248,7 +248,7 @@ AddStategraphState("wilson_client", alice_charge_pre_client)
 -----------------------------------------------------
 -------------------alice_shot_fire-------------------
 -----------------------------------------------------
-
+--MODE 4 攻击相关逻辑
 local alice_shot_fire = State{
         name = "alice_shot_fire",
         tags = { "doing", "alice_shot", "moving", "running"},
@@ -263,13 +263,28 @@ local alice_shot_fire = State{
             if equip and equip:HasTag("lightsword") then
                 equip:AddTag("fireatk")
                 equip.components.alice_sword.shotmode = 4
-                damage = equip.components.alice_sword:GeDamage()
+                damage = equip.components.alice_sword:GetDamage()
+                -- 获取外部伤害乘数
+                local externaldamagemultipliers = (inst and inst.components.combat and inst.components.combat.externaldamagemultipliers and inst.components.combat.externaldamagemultipliers:Get()) or 1
+                damage = damage * externaldamagemultipliers
+
+                -- 应用自定义伤害乘数函数
+                if inst.components.combat and inst.components.combat.customdamagemultfn then
+                    damage = damage * inst.components.combat.customdamagemultfn(inst)
+                end
+
             end
 
             if inst.alc_firefx == nil then
                 inst.alc_firefx = SpawnPrefab("laserthrower_fx")
-                inst.alc_firefx:InitDamage(damage)
+                inst.alc_firefx:InitDamage(0)
                 inst.alc_firefx:SetFlamethrowerAttacker(inst)
+                -- 添加位面伤害组件
+                if inst.alc_firefx.components.planardamage == nil then
+                    inst.alc_firefx:AddComponent("planardamage")
+                end
+                inst.alc_firefx.components.planardamage:SetBaseDamage(damage) 
+
                 inst.alc_firefx:UpdatePosition()
             end
             RunOrStop(inst)

@@ -11,9 +11,20 @@ AddPrefabPostInit("beequeen", function(inst)
     if not TheWorld.ismastersim then
         return
     end
-    AddRandomDrop(inst, "thorn_shield_blueprint", 1)
+    --AddRandomDrop(inst, "thorn_shield_blueprint", 1)
     AddRandomDrop(inst, "giftwrap_blueprint", 1)
 end)
+
+-- 为天体英雄添加启迪之冠碎片蓝图掉落
+AddPrefabPostInit("alterguardian_phase3", function(inst)
+    if not TheWorld.ismastersim then
+        return
+    end
+    
+    -- 添加蓝图掉落
+    AddRandomDrop(inst, "alterguardianhatshard_blueprint", 1)
+end)
+
 --新增犀牛掉落蓝图，猴子女王还是可以掉落。
 AddPrefabPostInit("minotaur", function(inst)
     if not TheWorld.ismastersim then
@@ -36,7 +47,7 @@ AddPrefabPostInit("minotaur", function(inst)
     end)
 end)
 
-AddPrefabPostInit("stalker_atrium", function(inst)
+--[[ AddPrefabPostInit("stalker_atrium", function(inst)
     if not TheWorld.ismastersim then
         return
     end
@@ -49,11 +60,11 @@ AddPrefabPostInit("stalker_atrium", function(inst)
             lootdropper:AddChanceLoot("shadow_shield_blueprint", 1)
         end
     end)
-end)
+end) ]]
 
-AddPrefabPostInit("dragonfly", function(inst)
+--[[ AddPrefabPostInit("dragonfly", function(inst)
     if not TheWorld.ismastersim then
         return
     end
     AddRandomDrop(inst, "alice_remote_blueprint", 1)
-end)
+end) ]]

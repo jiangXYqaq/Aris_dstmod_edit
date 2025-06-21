@@ -229,15 +229,22 @@ local function onsanitydelta(inst, data)
     if not data then
         return
     end
-	if inst.als_ring then
+    --阻止在精神值为0时光环关闭
+	--[[ if inst.als_ring then
         inst.als_ring.Light:Enable(data.newpercent > 0 and true or false)
-	end
+	end ]]
     local oldskin = inst.components.skinner.skin_name
     local newskin = ""
     if data.newpercent > 0.5 then
         newskin = inst.is_maid and "alice_maid" or "alice"
+        if inst.components.grue ~= nil then
+			inst.components.grue:RemoveImmunity("alice_red")
+		end
     else
         newskin = inst.is_maid and "alice_maid_red" or "alice_red"
+        if inst.components.grue ~= nil then
+			inst.components.grue:AddImmunity("alice_red")
+		end
     end
     --print(oldskin, newskin)
     if oldskin ~= newskin then
@@ -258,12 +265,12 @@ local function OnLoad(inst, data)
         onbecamehuman(inst)
     end
     if data ~= nil then
-        if data.gears_eaten ~= nil then
+        --[[ if data.gears_eaten ~= nil then
             inst._gears_eaten = data.gears_eaten
-        end
-        if data.level ~= nil then
+        end ]]
+        --[[ if data.level ~= nil then
             inst._gears_eaten = (inst._gears_eaten or 0) + data.level
-        end
+        end ]]
         if data._wx78_health then
             inst.components.health:SetCurrentHealth(data._wx78_health)
         end
@@ -277,7 +284,7 @@ local function OnLoad(inst, data)
 end
 
 local function OnSave(inst, data)
-    data.gears_eaten = inst._gears_eaten
+    --data.gears_eaten = inst._gears_eaten
     data._wx78_health = inst.components.health.currenthealth
     data._wx78_sanity = inst.components.sanity.current
     data._wx78_hunger = inst.components.hunger.current
@@ -421,7 +428,7 @@ local function OnDeath(inst)
     inst.components.timer:StopTimer(HUNGERDRAIN_TIMERNAME)
     inst.components.timer:StopTimer(CHARGEREGEN_TIMERNAME)
 
-    if inst._gears_eaten > 0 then
+    --[[ if inst._gears_eaten > 0 then
         local dropgears = math.random(math.floor(inst._gears_eaten / 3), math.ceil(inst._gears_eaten / 2))
         local x, y, z = inst.Transform:GetWorldPosition()
         for i = 1, dropgears do
@@ -443,16 +450,16 @@ local function OnDeath(inst)
         end
 
         inst._gears_eaten = 0
-    end
+    end ]]
 end
 
 local function OnEat(inst, food)
     if food ~= nil and food.components.edible ~= nil then
-        if food.components.edible.foodtype == FOODTYPE.GEARS then
+        --[[ if food.components.edible.foodtype == FOODTYPE.GEARS then
             inst._gears_eaten = inst._gears_eaten + 1
 
             inst.SoundEmitter:PlaySound("dontstarve/characters/wx78/levelup")
-        end
+        end ]]
     end
 
     local charge_amount = TUNING.WX78_CHARGING_FOODS[food.prefab]
@@ -587,7 +594,7 @@ end
 -- 暴击
 local function GetCritical(inst)
     local base = inst.alc_baojilv
-    local buff = (inst.light_buff or 0) * 0.3--有改动原0.15
+    local buff = (inst.light_buff or 0) * 0.2--有改动原0.15
     local equip = 0
 
     local damage = inst.alc_baojizhi
@@ -603,13 +610,14 @@ local function GetCritical(inst)
 	local total_crit_chance = base + buff + equip
 	local overflow = math.max(total_crit_chance - 1, 0)
 	local crit_chance = math.min(total_crit_chance, 1)
-	damage = damage + overflow * 3
+    local extra_crit_damage = TUNING.ALICE_LIGHTSWORD_DAMAGE_RATE or 1
+	damage = damage + overflow * extra_crit_damage * 3
     --print("暴击概率：", base + buff + equip, "暴击数值：", damage)
     return crit_chance, damage
 end
 
-local function customdamagemult(inst, target, weapon, multiplier, mount)
-    if mount then
+local function customdamagemult(inst)
+    if inst.replica.rider:IsRiding() then  -- 更直接的骑乘检查
         return 1
     end
     local chance, damage = GetCritical(inst)
@@ -649,8 +657,7 @@ local function common_postinit(inst) --客机函数
     inst.CanUpgradeWithModule = CLIENT_CanUpgradeWithModule
     inst.CanRemoveModules = CLIENT_CanRemoveModules
 end
-
-----------------战斗分析模块----------------
+----------------光之勇者模块----------------
 local function UpdateBuffAnim(inst)
     if inst.bufffx == nil then
         inst.bufffx = SpawnPrefab("alice_buff")
@@ -728,88 +735,6 @@ local function OnTimerFinished(inst, data)
         do_steam_fx(inst)
     end
 end
---[[ --NEED TO FILL THIS
-local GIFT_TABLE= {
-    GIFT_SPECIAL = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_FIRST = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_SECOND = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    },
-    GIFT_THIRD = {
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4},
-        {prefabs = {{"item",1},{"item2",2}}, weight = 4}
-    }
-}
-local GIFT_PROBABILITY = {
-    SPECIAL = 1/70,
-    FIRST = 7/70,
-    SECOND = 22/70,
-    THIRD = 40/70
-}
-
--- 加权随机算法
-local function GetWeightedRandomReward(pool)
-    local total = 0
-    for _,v in ipairs(pool) do total = total + v.weight end
-    local rnd = math.random(total)
-    for _,v in ipairs(pool) do
-        if rnd <= v.weight then return v end
-        rnd = rnd - v.weight
-    end
-end
-
--- 物品发放逻辑
-local function SpawnRewards(inst, rewards)
-    local pos = inst:GetPosition()
-    for _, itemData in ipairs(rewards) do
-        local item = SpawnPrefab(itemData[1])
-        if item then
-            -- 优先放入背包
-            if inst.components.inventory and itemData[2] then
-                item.components.stackable:SetStackSize(itemData[2])
-                inst.components.inventory:GiveItem(item)
-            else
-                item.Transform:SetPosition(pos:Get())
-            end
-        end
-    end
-    -- 播放特效 邦邦卡邦
-    --SpawnPrefab("statue_transition_2").Transform:SetPosition(pos:Get())
-end
-
-local function GiveDailyGift(inst)
-    if not inst.components.health:IsDead() and inst:HasTag("alice") then
-        local rand = math.random()
-        local rewardPool
-        if rand < GIFT_PROBABILITY.SPECIAL then
-            rewardPool = GIFT_TABLE.GIFT_SPECIAL
-        elseif rand < GIFT_PROBABILITY.FIRST then
-            rewardPool = GIFT_TABLE.GIFT_FIRST
-        elseif rand < GIFT_PROBABILITY.SECOND then
-            rewardPool = GIFT_TABLE.GIFT_SECOND
-        else
-            rewardPool = GIFT_TABLE.GIFT_THIRD
-        end
-        local selected = GetWeightedRandomReward(rewardPool)
-        if selected then
-            SpawnRewards(inst, selected.prefabs)
-        end
-    end
-end
-
---每日检查（游戏时间每天触发）
-local function OnNewDay(inst)
-    inst:DoTaskInTime(0.5, function() 
-        GiveDailyGift(inst) 
-    end)
-end ]]
 
 ----------------主机函数----------------
 local function master_postinit(inst)
@@ -822,7 +747,7 @@ local function master_postinit(inst)
     inst.components.hunger:SetMax(TUNING.ALICE_HUNGER)
     inst.components.sanity:SetMax(TUNING.ALICE_SANITY)
 
-    inst._gears_eaten = 0
+    --inst._gears_eaten = 0
     inst._chip_inuse = 0
     inst._moisture_steps = 0
     inst._temperature_modulelean = 0        -- 正值表示“高温”，负值表示“低温”；参见 wx78_moduledefs
@@ -833,7 +758,7 @@ local function master_postinit(inst)
 
     if inst.components.eater ~= nil then
         inst.components.eater:SetIgnoresSpoilage(true)
-        inst.components.eater:SetCanEatGears()
+        --inst.components.eater:SetCanEatGears()
         inst.components.eater:SetOnEatFn(OnEat)
     end
 
@@ -880,6 +805,23 @@ local function master_postinit(inst)
 
     inst.components.sleepingbaguser:SetCanSleepFn(CanSleepInBagFn)
 
+    --自定义的组件，在装备暗影防护板对抗天体阵营时生效
+    inst:AddComponent("alice_shadow_embrace")
+
+    -- 延迟初始化以确保所有组件就绪
+    inst:DoTaskInTime(0, function()
+        if inst.components.alice_shadow_embrace then
+            inst.components.alice_shadow_embrace:SetupListeners()
+            print("[AliceShadowEmbrace] Listeners set up")
+        else
+            print("[ERROR] AliceShadowEmbrace component missing")
+        end
+    end)
+
+    -- 移除滑倒组件，防止在任何冰面上滑倒
+    if inst.components.slipperyfeet then
+        inst:RemoveComponent("slipperyfeet")
+    end
     -- 睡觉时光环熄灭
     local oldDoSleep = inst.components.sleepingbaguser.DoSleep
     inst.components.sleepingbaguser.DoSleep = function(self, ...)
@@ -934,9 +876,6 @@ local function master_postinit(inst)
     inst:ListenForEvent("onhitother", AttackOrAttacked)
     inst:ListenForEvent("attacked", AttackOrAttacked)
     inst:ListenForEvent("lightswordshot", AttackOrAttacked)
-
-    --for_daily_gift
-    --inst:WatchWorldState("cycles", OnNewDay)
 
     inst.components.playerlightningtarget:SetHitChance(TUNING.WX78_LIGHTNING_TARGET_CHANCE)
     inst.components.playerlightningtarget:SetOnStrikeFn(OnLightningStrike)
