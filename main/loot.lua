@@ -16,7 +16,7 @@ AddPrefabPostInit("beequeen", function(inst)
 end)
 
 -- 为天体英雄添加启迪之冠碎片蓝图掉落
-AddPrefabPostInit("alterguardian_phase3", function(inst)
+AddPrefabPostInit("alterguardian_phase3dead", function(inst)
     if not TheWorld.ismastersim then
         return
     end
