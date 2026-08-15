@@ -292,38 +292,56 @@ local dianlu = {
 
 local ImageButton = require "widgets/imagebutton"
 
+-- ============================================================
+-- 适配新版三线电路结构的 OnModuleAdded 覆写
+-- ============================================================
 AddClassPostConstruct("widgets/upgrademodulesdisplay", function(self)
-	local oldOnModuleAdded = self.OnModuleAdded
-	self.OnModuleAdded = function(self, moduledefinition_index, ...)
+    local oldOnModuleAdded = self.OnModuleAdded
+
+    self.OnModuleAdded = function(self, bartype, moduledefinition_index, ...)
+        -- 调用原版处理，确保电路被正确插入对应线路
         if oldOnModuleAdded then
-		    oldOnModuleAdded(self, moduledefinition_index, ...)
+            oldOnModuleAdded(self, bartype, moduledefinition_index, ...)
         end
-		local module_def = GetModuleDefinitionFromNetID(moduledefinition_index)
+
+        local module_def = GetModuleDefinitionFromNetID(moduledefinition_index)
         if module_def == nil then
             return
         end
 
-		local modname = module_def.name
-		for k, v in pairs(modmodule) do
+        local modname = module_def.name
+        for _, v in pairs(modmodule) do
             if modname == v then
-                local new_chip = self.chip_objectpool[self.chip_poolindex - 1]
+                -- 获取对应线路的芯片池和当前使用索引
+                local pool = self.chip_objectpools[bartype]
+                if pool == nil then return end
+                local idx = self.chip_poolindexes[bartype] - 1  -- 新插入的芯片索引
+                local new_chip = pool[idx]
+                if new_chip == nil then return end
+
+                -- 替换芯片符号
                 new_chip:GetAnimState():OverrideSymbol("movespeed2_chip", "status_alice", dianlu[modname])
+
+                -- 为 alc_charge 添加按钮（按线路分组存储）
                 if modname == "alc_charge" then
-                    local num = self.chip_poolindex - 1
                     self.chipbutton = self.chipbutton or {}
-                    if self.chipbutton[num] == nil then
-                        self.chipbutton[num] = new_chip:AddChild(ImageButton("images/ui/select.xml", "select.tex"))
-                        self.chipbutton[num]:SetScale(.5, .5, .5)
-                        self.chipbutton[num]:SetPosition(-80, 0, 0)
-                        self.chipbutton[num]:SetOnClick(function()
-                            SendModRPCToServer(MOD_RPC["alice"]["alic_charge"], num)
-                            self.chipbutton[num]:OnSelect()
+                    self.chipbutton[bartype] = self.chipbutton[bartype] or {}
+                    if self.chipbutton[bartype][idx] == nil then
+                        local btn = new_chip:AddChild(ImageButton("images/ui/select.xml", "select.tex"))
+                        btn:SetScale(.5, .5, .5)
+                        btn:SetPosition(-80, 0, 0)
+                        btn:SetOnClick(function()
+                            SendModRPCToServer(MOD_RPC["alice"]["alic_charge"], idx)
+                            btn:OnSelect()
                         end)
+                        self.chipbutton[bartype][idx] = btn
                     end
                 end
+                break
             end
-		end
-	end
+        end
+    end
+
 
     if self.owner and self.owner:HasTag("alice") then
         self.battery_frame:GetAnimState():SetBank("status_alice")
