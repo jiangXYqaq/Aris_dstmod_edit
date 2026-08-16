@@ -9,146 +9,181 @@ local getprefab = require("alice_utils/getprefab")
 ---------------------------------------------
 -------------------强化魔法-------------------
 ---------------------------------------------
-local function maxhealth_change(inst, wx, amount, isloading)
-    if wx.components.health ~= nil then
-        local current_health_percent = wx.components.health:GetPercent()
 
-        wx.components.health.maxhealth = wx.components.health.maxhealth + amount
-
-        if not isloading then
-            wx.components.health:SetPercent(current_health_percent)
-
-            -- We want to force a badge pulse, but also maintain the health percent as much as we can.
-            local badgedelta = (amount > 0 and 0.01) or -0.01
-            wx.components.health:DoDelta(badgedelta, false, nil, true)
-        end
+-- 辅助函数：记录原始护盾上限
+local function record_original_shield_max(wx)
+    if wx.components.wx78_shield and wx._original_shield_max == nil then
+        wx._original_shield_max = wx.components.wx78_shield.max
     end
 end
 
-local function maxhunger_change(inst, wx, amount, isloading)
-    if wx.components.hunger ~= nil then
-        local current_hunger_percent = wx.components.hunger:GetPercent()
-        wx.components.hunger.max = wx.components.hunger.max + amount
-        
-        if not isloading then
-            wx.components.hunger:SetPercent(current_hunger_percent)
-            local badgedelta = (amount > 0 and 0.01) or -0.01
-            wx.components.hunger:DoDelta(badgedelta)
-        end
+-- 辅助函数：恢复原始护盾上限
+local function restore_original_shield_max(wx)
+    if wx.components.wx78_shield and wx._original_shield_max ~= nil then
+        wx.components.wx78_shield.max = wx._original_shield_max
+        wx._original_shield_max = nil
     end
 end
 
-local function maxsanity_change(inst, wx, amount, isloading)
-    if wx.components.sanity ~= nil then
-        local current_sanity_percent = wx.components.sanity:GetPercent()
-        wx.components.sanity.max = wx.components.sanity.max + amount
-        
-        if not isloading then
-            wx.components.sanity:SetPercent(current_sanity_percent)
-            local badgedelta = (amount > 0 and 0.01) or -0.01
-            wx.components.sanity:DoDelta(badgedelta)
-        end
+-- 辅助函数：获取装备理智回复的增益（覆写 get_equippable_dappernessfn）
+local function GetEquippableDappernessForMagic(owner, equippable)
+    local original_fn = owner._original_get_equippable_dappernessfn
+    local dapperness = original_fn and original_fn(owner, equippable) or equippable:GetDapperness(owner, owner.components.sanity.no_moisture_penalty)
+    -- 应用增益
+    if dapperness > 0 then
+        dapperness = dapperness * (1 + TUNING.MAGIC_SANITY_REGEN_BONUS_PERCENT)
     end
+    return dapperness
 end
 
-local function magic_tick(wx)
-    if wx.components.health then
-        wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
-    end
-    
-    if wx.components.sanity then
-        wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
-    end
-end
-
--- 温度舒适范围常量
-local COMFORT_MIN_TEMP = 5
-local COMFORT_MAX_TEMP = 65
-
--- 记录原始温度范围的函数
-local function record_original_temps(wx)
-    if not wx._original_temp_min then
-        wx._original_temp_min = wx.components.temperature.mintemp
-    end
-    if not wx._original_temp_max then
-        wx._original_temp_max = wx.components.temperature.maxtemp
-    end
-end
-
--- 恢复原始温度范围的函数
-local function restore_original_temps(wx)
-    if wx._original_temp_min then
-        wx.components.temperature.mintemp = wx._original_temp_min
-        wx._original_temp_min = nil
-    end
-    if wx._original_temp_max then
-        wx.components.temperature.maxtemp = wx._original_temp_max
-        wx._original_temp_max = nil
-    end
-end
-
-local function magic_activate(inst, wx)
+-- 修改 magic_activate 函数签名，增加 isloading 参数
+local function magic_activate(inst, wx, isloading)
+    -- 暴击相关（原有）
     if wx.alc_baojilv then
-        wx.alc_baojilv = wx.alc_baojilv + TUNING.ALICE_MAGIC_CHANCE --暴击率提升20%
+        wx.alc_baojilv = wx.alc_baojilv + TUNING.ALICE_MAGIC_CHANCE
     end
-
     if wx.alc_baojizhi then
         wx.alc_baojizhi = wx.alc_baojizhi + TUNING.ALICE_MAGIC_VALUE
-    end 
+    end
+
+    -- 三维提升（原有）
     maxhealth_change(inst, wx, TUNING.MAGIC_MAXHEALTH_BOOST, isloading)
     maxhunger_change(inst, wx, TUNING.MAGIC_MAXHUNGER_BOOST, isloading)
     maxsanity_change(inst, wx, TUNING.MAGIC_MAXSANITY_BOOST, isloading)
 
-    -- 新增饥饿燃烧速率修改（减慢）
+    -- 饥饿燃烧减慢（原有）
     if wx.components.hunger and wx.components.hunger.burnratemodifiers then
         wx.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.MAGIC_HUNGER_BURN_SLOW_PERCENT)
     end
 
-     -- 添加自动回复效果
+    -- 自动回复任务（原有，但需修改 magic_tick 函数）
     if not wx._magic_tick_task then
         wx._magic_tick_task = wx:DoPeriodicTask(TUNING.MAGIC_REGEN_INTERVAL, magic_tick, nil, wx)
     end
 
-     -- 温度限制 - 仅在组件存在时执行
-     if wx.components.temperature then
-        -- 记录原始温度范围
+    -- 温度舒适范围（原有）
+    if wx.components.temperature then
         record_original_temps(wx)
-        
-        -- 设置舒适温度范围
         wx.components.temperature.mintemp = COMFORT_MIN_TEMP
         wx.components.temperature.maxtemp = COMFORT_MAX_TEMP
-        
+    end
+
+    -- 降低疯狂光环影响
+    if wx.components.sanity and wx.components.sanity.neg_aura_modifiers then
+        wx.components.sanity.neg_aura_modifiers:SetModifier(inst, TUNING.MAGIC_SANITY_AURA_MOD_PERCENT)
+    end
+
+    -- 装备物品理智回复增益
+    if wx.components.sanity then
+        -- 保存原始的 get_equippable_dappernessfn
+        if not wx._original_get_equippable_dappernessfn then
+            wx._original_get_equippable_dappernessfn = wx.components.sanity.get_equippable_dappernessfn
+        end
+        wx.components.sanity.get_equippable_dappernessfn = GetEquippableDappernessForMagic
+    end
+
+    -- 护盾回复速度
+    if wx.components.wx78_shield then
+        wx.components.wx78_shield:AddChargeSource(inst, TUNING.MAGIC_SHIELD_REGEN_SPEED, "magic_shield_regen")
+    end
+
+    -- 护盾上限增加最大生命值比例
+    if wx.components.wx78_shield and wx.components.health then
+        record_original_shield_max(wx)
+        local new_max = wx.components.health.maxhealth * (1 + TUNING.MAGIC_SHIELD_CAP_BONUS_PERCENT)
+        wx.components.wx78_shield:SetMax(math.max(1, new_max))
+    end
+
+    -- 物理伤害减免（无法减少护甲生命值损耗）
+    if wx.components.combat then
+        wx.components.combat.externaldamagetakenmultipliers:SetModifier(
+            inst,
+            1 - TUNING.MAGIC_PHYSICAL_DAMAGE_REDUCTION_PERCENT,
+            "magic_damage_reduction"
+        )
     end
 end
 
-
-
+-- 修改 magic_deactivate
 local function magic_deactivate(inst, wx)
+    -- 暴击相关
     if wx.alc_baojilv then
         wx.alc_baojilv = wx.alc_baojilv - TUNING.ALICE_MAGIC_CHANCE
     end
-
     if wx.alc_baojizhi then
         wx.alc_baojizhi = wx.alc_baojizhi - TUNING.ALICE_MAGIC_VALUE
-    end 
+    end
+
+    -- 三维恢复
     maxhealth_change(inst, wx, -TUNING.MAGIC_MAXHEALTH_BOOST)
     maxhunger_change(inst, wx, -TUNING.MAGIC_MAXHUNGER_BOOST)
     maxsanity_change(inst, wx, -TUNING.MAGIC_MAXSANITY_BOOST)
 
-    -- 移除饥饿燃烧速率修改
+    -- 移除饥饿燃烧修改
     if wx.components.hunger and wx.components.hunger.burnratemodifiers then
         wx.components.hunger.burnratemodifiers:RemoveModifier(inst)
     end
 
-    -- 移除自动回复效果
+    -- 移除自动回复任务
     if wx._magic_tick_task then
         wx._magic_tick_task:Cancel()
         wx._magic_tick_task = nil
     end
 
-    -- 恢复原始温度范围
+    -- 恢复温度范围
     if wx.components.temperature then
         restore_original_temps(wx)
+    end
+
+
+    -- 移除疯狂光环修正
+    if wx.components.sanity and wx.components.sanity.neg_aura_modifiers then
+        wx.components.sanity.neg_aura_modifiers:RemoveModifier(inst)
+    end
+
+    -- 恢复原始的 get_equippable_dappernessfn
+    if wx.components.sanity then
+        if wx._original_get_equippable_dappernessfn then
+            wx.components.sanity.get_equippable_dappernessfn = wx._original_get_equippable_dappernessfn
+            wx._original_get_equippable_dappernessfn = nil
+        else
+            wx.components.sanity.get_equippable_dappernessfn = nil
+        end
+    end
+
+    -- 移除护盾回复速度来源
+    if wx.components.wx78_shield then
+        wx.components.wx78_shield:RemoveChargeSource(inst, "magic_shield_regen")
+    end
+
+    -- 恢复护盾上限
+    if wx.components.wx78_shield then
+        restore_original_shield_max(wx)
+    end
+
+    -- 移除物理伤害减免
+    if wx.components.combat then
+        wx.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "magic_damage_reduction")
+    end
+end
+
+local function magic_tick(wx)
+    if wx.components.health then
+        if wx.components.health:IsHurt() then
+            wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
+        else
+            if wx.components.wx78_shield then
+                wx.components.wx78_shield:DoDelta(TUNING.MAGIC_FULLHEALTH_SHIELD_REGEN)
+            end
+        end
+    end
+
+    if wx.components.sanity then
+        wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
+    end
+
+    if wx.components.wx78_shield then
+        wx.components.wx78_shield:DoDelta(TUNING.MAGIC_SHIELD_REGEN)
     end
 end
 
@@ -156,6 +191,7 @@ local MAGIC_MODULE_DATA =
 {
     name = "alc_magic",
     slots = 2,
+    type = CIRCUIT_BARS.ALPHA,   -- 阿尔法
     activatefn = magic_activate,
     deactivatefn = magic_deactivate,
 }
@@ -204,6 +240,7 @@ local BATTLE_MODULE_DATA =
 {
     name = "alc_battle",
     slots = 3,
+    type = CIRCUIT_BARS.GAMMA,   -- 伽马
     activatefn = battle_activate,
     deactivatefn = battle_deactivate,
 }
@@ -267,6 +304,7 @@ local CHARGE_MODULE_DATA =
 {
     name = "alc_charge",
     slots = 1,
+    type = CIRCUIT_BARS.BETA,    -- 贝塔
     activatefn = charge_activate,
     deactivatefn = charge_deactivate,
 }

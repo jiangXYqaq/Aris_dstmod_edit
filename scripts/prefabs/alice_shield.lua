@@ -1,4 +1,5 @@
---Aris 服装强化插板的设置。基本上都改为更高的耐久和防御
+--Aris 服装强化插板的设置。
+--注意，此文件并不是关于wx78的护盾机制。
 local assets =
 {
     Asset("ANIM", "anim/wooden_shield.zip"),

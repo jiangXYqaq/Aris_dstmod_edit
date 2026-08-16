@@ -612,6 +612,7 @@ local function common_postinit(inst) --客机函数
     inst:AddTag("soulless")             -- 没有灵魂
     inst:AddTag("upgrademoduleowner")   -- upgrademoduleowner组件
 	inst:AddTag("mightiness_mighty")    -- 重物不减速
+    inst:AddTag("wx78_shield")          -- from wx78_shield component
 
     if not TheNet:IsDedicated() then
         inst.CreateMoistureMeter = WX78MoistureMeter
@@ -635,6 +636,8 @@ local function common_postinit(inst) --客机函数
 
     inst.CanUpgradeWithModule = CLIENT_CanUpgradeWithModule
     inst.CanRemoveModules = CLIENT_CanRemoveModules
+    --修复无GetMaxEnergy方法
+    WX78Common.SetupUpgradeModuleOwnerInstanceFunctions(inst)
 end
 ----------------光之勇者模块----------------
 local function UpdateBuffAnim(inst)
@@ -743,6 +746,11 @@ local function OnTimerFinished(inst, data)
     end
 end
 
+local function RedirectToWxShield(inst, amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+	return inst.components.wx78_shield ~= nil and inst.components.wx78_shield:OnTakeDamage(amount, overtime, cause, ignore_invincible, afflicter, ignore_absorb)
+end
+
+--仅服务端执行
 ----------------主机函数----------------
 local function master_postinit(inst)
     -- 初始物品
@@ -797,6 +805,11 @@ local function master_postinit(inst)
 
     inst:AddComponent("batteryuser")
     inst.components.batteryuser.onbatteryused = OnChargeFromBattery
+
+    inst:AddComponent("wx78_shield")
+    inst.components.wx78_shield:SetMax(1)
+    inst.components.wx78_shield:SetCurrent(0)
+    inst.components.health.deltamodifierfn = RedirectToWxShield
 
     inst:AddComponent("preserver")
     inst.components.preserver:SetPerishRateMultiplier(ModuleBasedPreserverRateFn)
