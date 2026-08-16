@@ -82,11 +82,14 @@ local function Hooklightsword(sg)
                 return false
             end
             -- 蓄力还在CD
-            if mode == 3 and invobject:HasTag("charging") then
-                if doer and doer.components.talker then
-                    doer.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.CHARGECD)
+            if mode == 3 then
+                if doer and doer.components.wx78_abilitycooldowns 
+                    and doer.components.wx78_abilitycooldowns:IsInCooldown("alice_laser_cannon") then
+                    if doer and doer.components.talker then
+                        doer.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.CHARGECD)
+                    end
+                    return false
                 end
-                return false
             end
             -- 电池耐久不足
             if mode == 0 then
@@ -132,6 +135,52 @@ end
 
 AddStategraphPostInit("wilson", Hooklightsword)
 AddStategraphPostInit("wilson_client", Hooklightsword_clinet)
+
+local function StartCoolingTask(inst)
+    -- 如果已有散热任务，先取消
+    if inst._cooling_task then
+        inst._cooling_task:Cancel()
+        inst._cooling_task = nil
+    end
+
+    -- 如果热量已经为0，无需启动
+    if (inst._laser_heat or 0) <= 0 then
+        return
+    end
+
+    inst._cooling_task = inst:DoPeriodicTask(0.1, function()
+        local season = TheWorld.state.season
+        local cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SPRING
+        if season == "summer" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SUMMER
+        elseif season == "winter" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_WINTER
+        elseif season == "autumn" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_AUTUMN
+        end
+
+        inst._laser_heat = math.max(0, inst._laser_heat - cool_rate * 0.1)
+
+        -- 热量归零 → 取消任务 + 解锁技能
+        if inst._laser_heat <= 0 then
+            inst._laser_heat = 0
+            if inst._cooling_task then
+                inst._cooling_task:Cancel()
+                inst._cooling_task = nil
+            end
+            if inst.components.wx78_abilitycooldowns then
+                inst.components.wx78_abilitycooldowns:StopAbilityCooldown("alice_laser_overheat")
+            end
+        end
+    end)
+end
+
+local function StopCoolingTask(inst)
+    if inst._cooling_task then
+        inst._cooling_task:Cancel()
+        inst._cooling_task = nil
+    end
+end
 
 --RPC
 ALC_UpdateAOETargeting = function(player, cancel)
@@ -254,6 +303,18 @@ local alice_shot_fire = State{
         tags = { "doing", "alice_shot", "moving", "running"},
 
         onenter = function(inst)
+            -- 先检查冷却状态，再决定是否取消散热
+            if inst.components.wx78_abilitycooldowns 
+                and inst.components.wx78_abilitycooldowns:IsInCooldown("alice_laser_overheat") 
+            then
+                -- 冷却中：不取消散热任务，直接退回 idle
+                inst.sg:GoToState("idle")
+                return
+            end
+            
+            -- 冷却未锁定，取消散热任务（射击时不应散热）
+            StopCoolingTask(inst)
+
             inst.components.locomotor:Stop()
             inst.AnimState:PlayAnimation("alice_powershot_loop", true)
             inst:AddTag("alice_shot")
@@ -302,6 +363,9 @@ local alice_shot_fire = State{
             if equip then
                 equip:RemoveTag("fireatk")
             end
+            if inst._laser_heat and inst._laser_heat > 0 then
+                StartCoolingTask(inst)
+            end
         end,
 
         onupdate = function(inst)
@@ -314,6 +378,15 @@ local alice_shot_fire = State{
                 and equip.components.alice_sword:Checkfiniteuses()) then
                 inst.sg:GoToState("idle")
             end
+            inst._laser_heat = (inst._laser_heat or 0) + TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_GAIN_PER_SECOND * dt
+            if inst._laser_heat >= TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_MAX then
+                inst._laser_heat = TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_MAX
+                if inst.components.wx78_abilitycooldowns then
+                    inst.components.wx78_abilitycooldowns:RestartAbilityCooldown("alice_laser_overheat", 999)
+                end
+                inst.sg:GoToState("idle")
+            end
+            
             if inst.alc_mousepos ~= nil then
                 inst:ForceFacePoint(inst.alc_mousepos)
             end
@@ -365,12 +438,22 @@ AddStategraphState("wilson_client", alice_shot_fire_client)
 -----------------------------------------------------
 ------------------alice_charge_loop------------------
 -----------------------------------------------------
-
+--模式3蓄力
 local alice_charge_loop = State{
         name = "alice_charge_loop",
         tags = {"alice_shot", "moving", "running"},
 
         onenter = function(inst)
+            -- 检查冷却状态
+            if inst.components.wx78_abilitycooldowns 
+                and inst.components.wx78_abilitycooldowns:IsInCooldown("alice_laser_cannon") 
+            then
+            -- 冷却中，不允许蓄力
+            inst.alc_canshot = nil
+            inst.sg:GoToState("idle")
+            return
+        end
+
             inst.AnimState:PlayAnimation("alice_powershot_loop", true)
             inst:AddTag("alice_shot")
             if inst:HasTag("alice") then
@@ -432,8 +515,15 @@ local alice_charge_loop_client = State{
 		server_states = { "alice_charge_loop"},
 
         onenter = function(inst)
-            inst.AnimState:PlayAnimation("alice_powershot_loop", true)
+            -- 检查冷却状态（客户端通过 replica 查询）
+            if inst.replica.wx78_abilitycooldowns 
+                and inst.replica.wx78_abilitycooldowns:IsInCooldown("alice_laser_cannon") 
+            then
+                inst.sg:GoToState("idle")
+                return
+            end
             
+            inst.AnimState:PlayAnimation("alice_powershot_loop", true)
             RunOrStop(inst)
         end,
 
@@ -473,7 +563,7 @@ AddStategraphState("wilson_client", alice_charge_loop_client)
 -----------------------------------------------------
 -------------------alice_charge_pst------------------
 -----------------------------------------------------
-
+--模式3射击
 local alice_charge_pst = State{
         name = "alice_charge_pst",
         tags = { "moving", "running", "busy", "alice_shot"},
@@ -500,9 +590,14 @@ local alice_charge_pst = State{
         {
             TimeEvent(2*FRAMES, function(inst) 
                 local equip = GetWeapon_Master(inst)
-                if equip ~= nil and equip.components.alice_sword and equip.components.rechargeable then
+                if equip ~= nil and equip.components.alice_sword then
                     equip.components.alice_sword:LaunchLaser(inst, inst.alc_mousepos)
-                    equip.components.rechargeable:Discharge(TUNING.LIGHTSWORDCD)
+                    if inst.components.wx78_abilitycooldowns then
+                        inst.components.wx78_abilitycooldowns:RestartAbilityCooldown(
+                            "alice_laser_cannon", 
+                            TUNING.LIGHTSWORDCD
+                        )
+                    end
                 end 
             end),
         },

@@ -14,6 +14,7 @@ local function tool_fn()
     MakeInventoryPhysics(inst)
 
     inst:AddTag("alice_battery")
+    inst:AddTag("batteryuser")          -- 标记为可被充电
 
     inst.AnimState:SetBank("alice_battery")
     inst.AnimState:SetBuild("alice_battery")
@@ -27,14 +28,26 @@ local function tool_fn()
         return inst
     end
     
-    inst:AddComponent("finiteuses")
-    inst.components.finiteuses:SetMaxUses(1000)--增加耐久
-    inst.components.finiteuses:SetUses(1000)
+    inst:AddComponent("fueled")
+    inst.components.fueled:InitializeFuelLevel(TUNING.ALICE_BATTERY_INITIAL_USES)
+    inst.components.fueled:SetMaxFuel(TUNING.ALICE_BATTERY_MAX_USES)
 
     inst:AddComponent("inspectable")
     
     inst:AddComponent("inventoryitem")
 	inst.components.inventoryitem.atlasname = "images/inventoryimages/alice_battery.xml"
+
+    -- ===== 用电器（接受充电）=====
+    inst:AddComponent("batteryuser")
+    inst.components.batteryuser:SetOnBatteryUsedFn(function(inst, charger, charge_amount)
+        if charge_amount <= 0 or inst.components.fueled:IsFull() then
+            return false, "CHARGE_FULL"
+        end
+        local new_pct = math.min(1, inst.components.fueled:GetPercent() + charge_amount)
+        inst.components.fueled:SetPercent(new_pct)
+        return true
+    end)
+    inst.components.batteryuser:SetAllowPartialCharge(true)
 
     MakeHauntableLaunch(inst)
     

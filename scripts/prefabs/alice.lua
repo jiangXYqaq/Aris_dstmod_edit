@@ -1,5 +1,6 @@
 local MakePlayerCharacter = require("prefabs/player_common")
 local WX78MoistureMeter = require("widgets/wx78moisturemeter")
+local WX78Common = require("prefabs/wx78_common")
 local easing = require("easing")
 
 local assets = {
@@ -50,74 +51,6 @@ local function CLIENT_GetEnergyLevel(inst)
         return inst.player_classified.currentenergylevel:value()
     else
         return 0
-    end
-end
-
-local function get_plugged_module_indexes(inst)
-    local upgrademodule_defindexes = {}
-    for _, module in ipairs(inst.components.upgrademoduleowner.modules) do
-        table.insert(upgrademodule_defindexes, module._netid)
-    end
-
-    while #upgrademodule_defindexes < TUNING.WX78_MAXELECTRICCHARGE do
-        table.insert(upgrademodule_defindexes, 0)
-    end
-
-    return upgrademodule_defindexes
-end
-
-local DEFAULT_ZEROS_MODULEDATA = {0, 0, 0, 0, 0, 0}
-local function CLIENT_GetModulesData(inst)
-    local data = nil
-
-    if inst.components.upgrademoduleowner ~= nil then
-        data = get_plugged_module_indexes(inst)
-    elseif inst.player_classified ~= nil then
-        data = {}
-        for _, module_netvar in ipairs(inst.player_classified.upgrademodules) do
-            table.insert(data, module_netvar:value())
-        end
-    else
-        data = DEFAULT_ZEROS_MODULEDATA
-    end
-
-    return data
-end
-
-local function CLIENT_CanUpgradeWithModule(inst, module_prefab)
-    if module_prefab == nil then
-        return false
-    end
-
-    local slots_inuse = (module_prefab._slots or 0)
-
-    if inst.components.upgrademoduleowner ~= nil then
-        for _, module in ipairs(inst.components.upgrademoduleowner.modules) do
-            local modslots = (module.components.upgrademodule ~= nil and module.components.upgrademodule.slots)
-                or 0
-            slots_inuse = slots_inuse + modslots
-        end
-    elseif inst.player_classified ~= nil then
-        for _, module_netvar in ipairs(inst.player_classified.upgrademodules) do
-            local module_definition = GetWX78ModuleByNetID(module_netvar:value())
-            if module_definition ~= nil then
-                slots_inuse = slots_inuse + module_definition.slots
-            end
-        end
-    else
-        return false
-    end
-
-    return (TUNING.WX78_MAXELECTRICCHARGE - slots_inuse) >= 0
-end
-
-local function CLIENT_CanRemoveModules(inst)
-    if inst.components.upgrademoduleowner ~= nil then
-        return inst.components.upgrademoduleowner:NumModules() > 0
-    elseif inst.player_classified ~= nil then
-        return inst.player_classified.upgrademodules[1]:value() ~= 0
-    else
-        return false
     end
 end
 
@@ -458,57 +391,69 @@ local function OnFrozen(inst)
     end
 end
 
--- 添加芯片
+-- 插入芯片时的回调
 local function OnUpgradeModuleAdded(inst, moduleent)
-    local slots_for_module = moduleent.components.upgrademodule.slots
-    inst._chip_inuse = inst._chip_inuse + slots_for_module
+    local moduletype = moduleent.components.upgrademodule:GetType()
 
-    local upgrademodule_defindexes = get_plugged_module_indexes(inst)
-
-    inst:PushEvent("upgrademodulesdirty", upgrademodule_defindexes)
-    if inst.player_classified ~= nil then
-        local newmodule_index = inst.components.upgrademoduleowner:NumModules()
-        inst.player_classified.upgrademodules[newmodule_index]:set(moduleent._netid or 0)
+    inst:PushEvent("upgrademodulesdirty", inst:GetModulesData())
+    if inst.wx78_classified ~= nil then
+        local newmodule_index = inst.components.upgrademoduleowner:GetNumModules(moduletype)
+        inst.wx78_classified.upgrademodulebars[moduletype][newmodule_index]:set(moduleent._netid or 0)
     end
 end
 
--- 移除芯片
+-- 移除芯片时的回调（原版处理耐久度逻辑）
 local function OnUpgradeModuleRemoved(inst, moduleent)
-    inst._chip_inuse = inst._chip_inuse - moduleent.components.upgrademodule.slots
-    --如果芯片仅剩1次耐久，直接删除
-    if moduleent.components.finiteuses == nil or moduleent.components.finiteuses:GetUses() > 1 then
-        if moduleent.components.inventoryitem ~= nil and inst.components.inventory ~= nil then
-            inst.components.inventory:GiveItem(moduleent, nil, inst:GetPosition())
+    if moduleent.components.finiteuses == nil or moduleent.components.finiteuses:GetUses() > 0.5 then
+        if not inst.components.upgrademoduleowner:IsSwapping() and moduleent.components.inventoryitem ~= nil and inst.components.inventory ~= nil then
+            local pos = not inst.components.health:IsDead() and inst:GetPosition() or nil
+            inst.components.inventory:GiveItem(moduleent, nil, pos)
         end
     end
 end
 
-local function OnOneUpgradeModulePopped(inst, moduleent)
-    inst:PushEvent("upgrademodulesdirty", get_plugged_module_indexes(inst))
-    if inst.player_classified ~= nil then
-        -- 移除操作的回调，当前的模块数量应该比刚移除的模块索引低1。
-        local top_module_index = inst.components.upgrademoduleowner:NumModules() + 1
-        inst.player_classified.upgrademodules[top_module_index]:set(0)
+-- 弹出芯片时的回调（扣除电量）
+local function OnOneUpgradeModulePopped(inst, moduleent, was_activated)
+    local moduletype = moduleent.components.upgrademodule:GetType()
+    local moduleslotcount = moduleent.components.upgrademodule:GetSlots()
+    if was_activated then
+        local charge_cost = -moduleslotcount
+        local skilltreeupdater = inst.components.skilltreeupdater
+        if skilltreeupdater and skilltreeupdater:IsActivated("wx78_circuitry_bettercharge") then
+            charge_cost = math.min(charge_cost + TUNING.SKILLS.WX78.SAVE_CHARGE_ON_UNPLUG, -1)
+        end
+        inst.components.upgrademoduleowner:DoDeltaCharge(charge_cost)
+    end
+
+    inst:PushEvent("upgrademodulesdirty", inst:GetModulesData())
+    if inst.wx78_classified ~= nil then
+        for i, netvar in ipairs(inst.wx78_classified.upgrademodulebars[moduletype]) do
+            local module = inst.components.upgrademoduleowner:GetModule(moduletype, i)
+            netvar:set(module ~= nil and module._netid or 0)
+        end
     end
 end
 
+-- 全部弹出时的回调
 local function OnAllUpgradeModulesRemoved(inst)
     SpawnPrefab("wx78_big_spark"):AlignToTarget(inst)
     inst:PushEvent("upgrademoduleowner_popallmodules")
 
-    if inst.player_classified ~= nil then
-        inst.player_classified.upgrademodules[1]:set(0)
-        inst.player_classified.upgrademodules[2]:set(0)
-        inst.player_classified.upgrademodules[3]:set(0)
-        inst.player_classified.upgrademodules[4]:set(0)
-        inst.player_classified.upgrademodules[5]:set(0)
-        inst.player_classified.upgrademodules[6]:set(0)
+    if inst.wx78_classified ~= nil then
+        for i, modules in pairs(inst.wx78_classified.upgrademodulebars) do
+            for j, netvar in ipairs(modules) do
+                netvar:set(0)
+            end
+        end
     end
 end
 
--- 芯片使用判定
+-- 检查是否有足够电量插入
 local function CanUseUpgradeModule(inst, moduleent)
-    if (TUNING.WX78_MAXELECTRICCHARGE - inst._chip_inuse) < moduleent.components.upgrademodule.slots then
+    local moduletype = moduleent.components.upgrademodule:GetType()
+    local slots_in_use = inst.components.upgrademoduleowner:GetUsedSlotCount(moduletype)
+    local max_charge = inst.components.upgrademoduleowner:GetMaxChargeLevel()
+    if max_charge - slots_in_use < moduleent.components.upgrademodule:GetSlots() then
         return false, "NOTENOUGHSLOTS"
     else
         return true
@@ -603,6 +548,47 @@ local function customdamagemult(inst)
     return math.random() < chance and damage or 1
 end
 
+--引用的wx78 prefab方法
+local function COMMON_GetShieldPenetrationThreshold(inst)
+    if inst.components.wx78_shield ~= nil then
+        return inst.components.wx78_shield:GetPenetrationThreshold()
+    elseif inst.wx78_classified ~= nil then
+        return inst.wx78_classified.shieldpenetrationthreshold:value()
+    else
+        return 15
+    end
+end
+
+local function COMMON_GetCurrentShield(inst)
+    if inst.components.wx78_shield ~= nil then
+        return inst.components.wx78_shield:GetCurrent()
+    elseif inst.wx78_classified ~= nil then
+        return inst.wx78_classified.currentshield:value()
+    else
+        return 0
+    end
+end
+
+local function COMMON_GetMaxShield(inst)
+    if inst.components.wx78_shield ~= nil then
+        return inst.components.wx78_shield:GetMax()
+    elseif inst.wx78_classified ~= nil then
+        return inst.wx78_classified.maxshield:value()
+    else
+        return 1
+    end
+end
+
+local function COMMON_GetCanShieldCharge(inst)
+    if inst.components.wx78_shield ~= nil then
+        return inst.components.wx78_shield:GetCanShieldCharge()
+    elseif inst.wx78_classified ~= nil then
+        return inst.wx78_classified.canshieldcharge:value()
+    else
+        return false
+    end
+end
+
 local function common_postinit(inst) --客机函数
     inst:AddTag("alice")
     inst:AddTag("electricdamageimmune") -- 免疫闪电伤害
@@ -631,15 +617,20 @@ local function common_postinit(inst) --客机函数
 
     inst.components.talker.mod_str_fn = string.utf8upper
 
-    inst.GetEnergyLevel = CLIENT_GetEnergyLevel
-    inst.GetModulesData = CLIENT_GetModulesData
-
-    inst.CanUpgradeWithModule = CLIENT_CanUpgradeWithModule
-    inst.CanRemoveModules = CLIENT_CanRemoveModules
     --修复无GetMaxEnergy方法
     WX78Common.SetupUpgradeModuleOwnerInstanceFunctions(inst)
+    --使用原版新增的技能冷却方法
+    inst:AddComponent("wx78_abilitycooldowns")
+
+    -- 挂载护盾查询方法（与wx78 一致）
+    inst.GetShieldPenetrationThreshold = COMMON_GetShieldPenetrationThreshold
+    inst.GetCurrentShield = COMMON_GetCurrentShield
+    inst.GetMaxShield = COMMON_GetMaxShield
+    inst.GetCanShieldCharge = COMMON_GetCanShieldCharge
 end
-----------------光之勇者模块----------------
+----------------光之勇者----------------
+--来源于战斗分析模块main\module.lua\@AddNewModuleDefinition(BATTLE_MODULE_DATA)
+--进入战斗后每2秒获得光，30秒内没有战斗视为脱战，失去所有光。
 local function UpdateBuffAnim(inst)
     if inst.bufffx == nil then
         inst.bufffx = SpawnPrefab("alice_buff")
@@ -692,8 +683,7 @@ local function OnItemStolen(inst, data)
         PunishOffender(inst, data.thief)  -- 使用统一惩罚函数
     end
 end
---模块光之勇者逻辑
---进入战斗后每2秒获得光，30秒内没有战斗视为脱战，失去所有光。
+
 local function AttackOrAttacked(inst, data)
     if not inst.battle_activate then
         return
@@ -757,6 +747,10 @@ local function master_postinit(inst)
     inst.starting_inventory = start_inv
     -- 角色声音
 	inst.soundsname = "willow" 
+
+    inst.wx78_classified = SpawnPrefab("wx78_classified")
+    inst.wx78_classified.entity:SetParent(inst.entity)
+
     -- 三维
     inst.components.health:SetMaxHealth(TUNING.ALICE_HEALTH)
     inst.components.hunger:SetMax(TUNING.ALICE_HUNGER)
@@ -867,7 +861,7 @@ local function master_postinit(inst)
         end
     end
 
-    -- 护盾免伤
+    -- 护盾免伤 此处是关于骨甲护盾的缓冲机制，不是wx78的护盾
     local old_get_attacked = inst.components.combat.GetAttacked
     inst.components.combat.GetAttacked = function(self, ...)
         if self.inst and self.inst.light_buff and self.inst.light_buff >= 1 then --改为1层，原2层

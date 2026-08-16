@@ -8,23 +8,21 @@ description = [[
 精神值系统：高精神值→爱丽丝；低精神值→凯伊
 【副本目标更新：用扫把整理混沌，以光炮重写生存法则】
 
-v1.4.0更新：
+v1.5.0更新：
+兼容WX-78技能树升级的电路系统
 
-光之剑现在作为初始物品
+能制作并使用WX-78的新电路
 
-调整了光之剑和攻击属性
+调整模组电路的线路模式
 
-爱丽丝、扫地机器人和猴岛的特殊交互
+调整模组电路的数值使匹配WX-78的电路技能树强化效果
 
-被偷窃时会造成200伤害
-
-不受诅咒饰品影响(开发中)
 ]]
 
 author = "jiangXY"
-version = "1.4.0" -- Updated version to reflect the latest release
+version = "1.5.0" -- Updated version to reflect the latest release
 
-forumthread = ""
+forumthread = "beta"
 
 api_version = 10
 

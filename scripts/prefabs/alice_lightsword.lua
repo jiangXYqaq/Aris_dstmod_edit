@@ -213,14 +213,6 @@ local function equippedFn(inst)
     inst:DoTaskInTime(0, Changefn, nil, true)
 end
 
-local function OnCharged(inst)
-    inst:RemoveTag("charging")
-end
-
-local function OnDischarged(inst)
-    inst:AddTag("charging")
-end
-
 local function fn()
     local inst = CreateEntity()
 
@@ -238,7 +230,6 @@ local function fn()
 	inst:AddTag("weapon")
 	inst:AddTag("lightsword")
     inst:AddTag('trader')
-    inst:AddTag("rechargeable")
     inst:AddTag("nosteal")
 
     inst:AddComponent("aoetargeting")
@@ -295,10 +286,6 @@ local function fn()
 
     inst:AddComponent("alice_sword")
     inst.components.alice_sword:SetChangeFn(Changefn)
-
-    inst:AddComponent("rechargeable")
-    inst.components.rechargeable:SetOnDischargedFn(OnDischarged)
-    inst.components.rechargeable:SetOnChargedFn(OnCharged)
 
     inst:ListenForEvent("equipped", equippedFn)
     equippedFn(inst)

@@ -38,7 +38,7 @@ end
 
 -- 修改 magic_activate 函数签名，增加 isloading 参数
 local function magic_activate(inst, wx, isloading)
-    -- 暴击相关（原有）
+    -- 暴击相关
     if wx.alc_baojilv then
         wx.alc_baojilv = wx.alc_baojilv + TUNING.ALICE_MAGIC_CHANCE
     end
@@ -46,22 +46,22 @@ local function magic_activate(inst, wx, isloading)
         wx.alc_baojizhi = wx.alc_baojizhi + TUNING.ALICE_MAGIC_VALUE
     end
 
-    -- 三维提升（原有）
+    -- 三维提升
     maxhealth_change(inst, wx, TUNING.MAGIC_MAXHEALTH_BOOST, isloading)
     maxhunger_change(inst, wx, TUNING.MAGIC_MAXHUNGER_BOOST, isloading)
     maxsanity_change(inst, wx, TUNING.MAGIC_MAXSANITY_BOOST, isloading)
 
-    -- 饥饿燃烧减慢（原有）
+    -- 饥饿燃烧减慢
     if wx.components.hunger and wx.components.hunger.burnratemodifiers then
         wx.components.hunger.burnratemodifiers:SetModifier(inst, TUNING.MAGIC_HUNGER_BURN_SLOW_PERCENT)
     end
 
-    -- 自动回复任务（原有，但需修改 magic_tick 函数）
+    -- 自动回复任务
     if not wx._magic_tick_task then
         wx._magic_tick_task = wx:DoPeriodicTask(TUNING.MAGIC_REGEN_INTERVAL, magic_tick, nil, wx)
     end
 
-    -- 温度舒适范围（原有）
+    -- 温度舒适范围
     if wx.components.temperature then
         record_original_temps(wx)
         wx.components.temperature.mintemp = COMFORT_MIN_TEMP
@@ -203,6 +203,7 @@ AddCreatureScanDataDefinition("rocky", "alc_magic", 5)
 -------------------------------------------------
 -------------------战斗分析模块-------------------
 -------------------------------------------------
+--光之勇者部分代码在scripts\prefabs\alice.lua\@UpdateBuffAnim
 local function nightvision_onworldstateupdate(wx)
     wx:SetForcedNightVision(TheWorld.state.isnight and not TheWorld.state.isfullmoon, true)
 end
@@ -252,59 +253,116 @@ AddCreatureScanDataDefinition("rocky", "alc_battle", 5)
 ---------------------------------------------
 -------------------充电模块-------------------
 ---------------------------------------------
---加快了充电速度
-local function charge_activate(inst, wx)
-    inst:AddTag("FX")
-    inst:AddTag("CLASSIFIED")
-    getprefab.Hide(inst)
-    if inst.chargetask ~= nil then
-        inst.chargetask:Cancel()
-        inst.chargetask = nil
+
+local function charge_produce(wx)
+    local modules = wx._charge_modules or 0
+    if modules <= 0 then return end
+
+    -- 产出量 = 每模块产出量 × 模块数量
+    local amount = TUNING.ALICE_CHARGE_PER_TICK * modules
+    wx._charge_stored = (wx._charge_stored or 0) + amount
+    -- 存储上限 = 每模块上限 × 模块数量
+    wx._charge_stored = math.min(wx._charge_stored, TUNING.ALICE_MAX_CHARGE_STORED * modules)
+end
+
+local function charge_tick(wx)
+    local inventory = wx.components.inventory
+    if inventory == nil then
+        return
     end
 
-    inst.chargetask = inst:DoPeriodicTask(3, function()
-        local batterys = inst.components.container:GetAllItems()
-        for k, v in ipairs(batterys) do -- 遍历容器
-            if v:HasTag("alice_battery") and v.components.finiteuses then
-                local use = v.components.finiteuses:GetUses() + 10
-                use = math.min(1000, use)
-                v.components.finiteuses:SetUses(use)
-            end
+    -- 如果没有电荷，跳过
+    if (wx._charge_stored or 0) <= 0 then
+        return
+    end
 
-            if v:HasTag("alice_remote") and v.components.fueled then
-                local use = v.components.fueled:GetPercent() + 0.1
-                use = math.min(1, use) 
-                v.components.fueled:SetPercent(use)
+    -- 每 tick 消耗的电荷量
+    local charge_per_item = 1  -- 每个用电器消耗 1 电荷
+
+    -- 1. 遍历主物品栏
+    local num_slots = inventory:GetNumSlots()
+    local backpack = inventory:GetEquippedItem(EQUIPSLOTS.BACK)
+    if backpack and backpack.components.container then
+        num_slots = num_slots - backpack.components.container:GetNumSlots()
+    end
+
+    for i = 1, num_slots do
+        local item = inventory:GetItemInSlot(i)
+        if item and item.components.batteryuser then
+            local success = item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
+            if success then
+                wx._charge_stored = wx._charge_stored - charge_per_item
+            end
+            if wx._charge_stored <= 0 then
+                return
             end
         end
-    end)
+    end
+
+    -- 2. 检查手持物品
+    local hand_item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if hand_item then
+        if hand_item:HasTag("lightsword") and hand_item.components.container then
+            local container = hand_item.components.container
+            for i = 1, container:GetNumSlots() do
+                local inner_item = container:GetItemInSlot(i)
+                if inner_item and inner_item.components.batteryuser then
+                    local success = inner_item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
+                    if success then
+                        wx._charge_stored = wx._charge_stored - charge_per_item
+                    end
+                    if wx._charge_stored <= 0 then
+                        return
+                    end
+                end
+            end
+        end
+
+        if hand_item.components.batteryuser then
+            local success = hand_item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
+            if success then
+                wx._charge_stored = wx._charge_stored - charge_per_item
+            end
+        end
+    end
+end
+
+local function charge_activate(inst, wx, isloading)
+    wx._charge_modules = (wx._charge_modules or 0) + 1
+
+    if wx._charge_modules == 1 then
+        wx._charge_stored = wx._charge_stored or 0
+
+        if wx._charge_task then
+            wx._charge_task:Cancel()
+            wx._charge_task = nil
+        end
+
+        wx._charge_task = wx:DoPeriodicTask(TUNING.ALICE_CHARGE_INTERVAL, function()
+            charge_produce(wx)
+            charge_tick(wx)
+        end)
+        charge_produce(wx)
+        charge_tick(wx)
+    end
 end
 
 local function charge_deactivate(inst, wx)
-    if inst.chargetask ~= nil then
-        inst.chargetask:Cancel()
-        inst.chargetask = nil
+    wx._charge_modules = math.max(0, (wx._charge_modules or 1) - 1)
+
+    if wx._charge_modules <= 0 then
+        if wx._charge_task then
+            wx._charge_task:Cancel()
+            wx._charge_task = nil
+        end
     end
-
-    inst:DoTaskInTime(0, function()
-        if wx and wx.components.freezable and wx.components.freezable:IsFrozen() then
-            return
-        end
-
-        inst:RemoveTag("FX")
-        inst:RemoveTag("CLASSIFIED")
-        getprefab.Show(inst)
-        if inst.components.container ~= nil then
-            inst.components.container:Open(wx)
-        end
-    end)
 end
 
-local CHARGE_MODULE_DATA =
-{
+-- 模块定义
+local CHARGE_MODULE_DATA = {
     name = "alc_charge",
     slots = 1,
-    type = CIRCUIT_BARS.BETA,    -- 贝塔
+    type = CIRCUIT_BARS.BETA,
     activatefn = charge_activate,
     deactivatefn = charge_deactivate,
 }

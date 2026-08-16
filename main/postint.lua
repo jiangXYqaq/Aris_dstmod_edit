@@ -215,34 +215,6 @@ AddPrefabPostInit("klaus_sack", function(inst)
 	end
 end)
 
-AddPrefabPostInit("wx78module_alc_charge", function(inst)
-	if inst.charging == nil then
-		inst.charging = net_bool(inst.GUID, "inst.charging", "charging")
-	end
-end)
-
-AddComponentPostInit("upgrademodule", function(self)
-	local OldTryActivate = self.TryActivate
-	self.TryActivate = function(self, ...)
-		if OldTryActivate then
-			OldTryActivate(self, ...)
-		end
-		if self.inst and self.inst.charging then
-			self.inst.charging:set(true)
-		end
-	end
-
-	local OldTryDeactivate = self.TryDeactivate
-	self.TryDeactivate = function(self, ...)
-		if OldTryDeactivate then
-			OldTryDeactivate(self, ...)
-		end
-		if self.inst and self.inst.charging then
-			self.inst.charging:set(false)
-		end
-	end
-end)
-
 -- 位面伤害加成
 local tempattacker = nil
 local Combat = require("components/combat")

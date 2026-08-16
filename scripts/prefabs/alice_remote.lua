@@ -627,6 +627,18 @@ local function fn()
 	inst.components.fueled:SetDepletedFn(OnDepleted)
 	inst.components.fueled:SetTakeFuelFn(OnTakeFuel)
 
+	-- 添加用电器组件
+    inst:AddComponent("batteryuser")
+    inst.components.batteryuser:SetOnBatteryUsedFn(function(inst, charger, charge_amount)
+        if charge_amount <= 0 or inst.components.fueled:IsFull() then
+            return false, "CHARGE_FULL"
+        end
+        local new_pct = math.min(1, inst.components.fueled:GetPercent() + charge_amount)
+        inst.components.fueled:SetPercent(new_pct)
+        return true
+    end)
+    inst.components.batteryuser:SetAllowPartialCharge(true)
+
     inst:AddComponent("leader")
 
 	MakeHauntableLaunch(inst)
