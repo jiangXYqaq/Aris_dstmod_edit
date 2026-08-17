@@ -5,7 +5,11 @@ local AddCreatureScanDataDefinition = wx78_moduledefs.AddCreatureScanDataDefinit
 local GetModuleDefinitionFromNetID = wx78_moduledefs.GetModuleDefinitionFromNetID
 local AddNewModuleDefinition = wx78_moduledefs.AddNewModuleDefinition
 local getprefab = require("alice_utils/getprefab")
-
+-- 魔法电路温度相关常量
+local COMFORT_MIN_TEMP = 10
+local COMFORT_MAX_TEMP = 60
+local ORIGINAL_MIN_TEMP = nil
+local ORIGINAL_MAX_TEMP = nil
 ---------------------------------------------
 -------------------强化魔法-------------------
 ---------------------------------------------
@@ -36,6 +40,69 @@ local function GetEquippableDappernessForMagic(owner, equippable)
     return dapperness
 end
 
+local function maxhealth_change(inst, wx, amount, isloading)
+    if wx.components.health then
+        local current_health_percent = wx.components.health:GetPercent()
+
+        wx.components.health.maxhealth = wx.components.health.maxhealth + amount
+
+        if not isloading then
+            wx.components.health:SetPercent(current_health_percent)
+            local up = amount > 0
+            wx:PushEvent("forcehealthpulse", { up = up, down = not up })
+        end
+    end
+end
+
+local function maxhunger_change(inst, wx, amount, isloading)
+    if wx.components.hunger then
+        local current_hunger_percent = wx.components.hunger:GetPercent()
+
+        wx.components.hunger:SetMax(wx.components.hunger.max + amount)
+
+        -- Tie it to the module instance so we don't have to think too much about removing them.
+        if inst._hunger_module_burnrate ~= nil then
+            wx.components.hunger.burnratemodifiers:SetModifier(inst, inst._hunger_module_burnrate)
+        end
+
+        if not isloading then
+            wx.components.hunger:SetPercent(current_hunger_percent, false)
+        end
+    end
+end
+
+local function maxsanity_change(inst, wx, amount, isloading)
+    if wx.components.sanity then
+        local current_sanity_percent = wx.components.sanity:GetPercent()
+
+        wx.components.sanity:SetMax(wx.components.sanity.max + amount)
+
+        if not isloading then
+            wx.components.sanity:SetPercent(current_sanity_percent, false)
+        end
+    end
+end
+
+local function magic_tick(wx)
+    if wx.components.health then
+        if wx.components.health:IsHurt() then
+            wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
+        else
+            if wx.components.wx78_shield then
+                wx.components.wx78_shield:DoDelta(TUNING.MAGIC_FULLHEALTH_SHIELD_REGEN)
+            end
+        end
+    end
+
+    if wx.components.sanity then
+        wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
+    end
+
+    if wx.components.wx78_shield then
+        wx.components.wx78_shield:DoDelta(TUNING.MAGIC_SHIELD_REGEN)
+    end
+end
+
 -- 修改 magic_activate 函数签名，增加 isloading 参数
 local function magic_activate(inst, wx, isloading)
     -- 暴击相关
@@ -63,7 +130,8 @@ local function magic_activate(inst, wx, isloading)
 
     -- 温度舒适范围
     if wx.components.temperature then
-        record_original_temps(wx)
+        ORIGINAL_MIN_TEMP = wx.components.temperature.mintemp
+        ORIGINAL_MAX_TEMP = wx.components.temperature.maxtemp
         wx.components.temperature.mintemp = COMFORT_MIN_TEMP
         wx.components.temperature.maxtemp = COMFORT_MAX_TEMP
     end
@@ -132,7 +200,8 @@ local function magic_deactivate(inst, wx)
 
     -- 恢复温度范围
     if wx.components.temperature then
-        restore_original_temps(wx)
+        wx.components.temperature.mintemp = ORIGINAL_MIN_TEMP
+        wx.components.temperature.maxtemp = ORIGINAL_MAX_TEMP
     end
 
 
@@ -164,26 +233,6 @@ local function magic_deactivate(inst, wx)
     -- 移除物理伤害减免
     if wx.components.combat then
         wx.components.combat.externaldamagetakenmultipliers:RemoveModifier(inst, "magic_damage_reduction")
-    end
-end
-
-local function magic_tick(wx)
-    if wx.components.health then
-        if wx.components.health:IsHurt() then
-            wx.components.health:DoDelta(TUNING.MAGIC_HEALTH_REGEN, false, "magic_regen", true)
-        else
-            if wx.components.wx78_shield then
-                wx.components.wx78_shield:DoDelta(TUNING.MAGIC_FULLHEALTH_SHIELD_REGEN)
-            end
-        end
-    end
-
-    if wx.components.sanity then
-        wx.components.sanity:DoDelta(TUNING.MAGIC_SANITY_REGEN)
-    end
-
-    if wx.components.wx78_shield then
-        wx.components.wx78_shield:DoDelta(TUNING.MAGIC_SHIELD_REGEN)
     end
 end
 
@@ -262,7 +311,7 @@ local function charge_produce(wx)
     local amount = TUNING.ALICE_CHARGE_PER_TICK * modules
     wx._charge_stored = (wx._charge_stored or 0) + amount
     -- 存储上限 = 每模块上限 × 模块数量
-    wx._charge_stored = math.min(wx._charge_stored, TUNING.ALICE_MAX_CHARGE_STORED * modules)
+    wx._charge_stored = math.min(wx._charge_stored, TUNING.ALICE_CHARGE_MAX * modules)
 end
 
 local function charge_tick(wx)
@@ -271,59 +320,123 @@ local function charge_tick(wx)
         return
     end
 
-    -- 如果没有电荷，跳过
-    if (wx._charge_stored or 0) <= 0 then
+    -- 1. 收集当前需要充电的目标标识符
+    local current_ids = {}
+    
+    for i = 1, inventory:GetNumSlots() do
+        local item = inventory:GetItemInSlot(i)
+        if item and item.components.batteryuser then
+            local is_full = item.components.fueled and item.components.fueled:IsFull()
+            if not is_full then
+                table.insert(current_ids, i)
+            end
+        end
+    end
+
+    local hand_item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    if hand_item and hand_item:HasTag("lightsword") and hand_item.components.container then
+        local inner_item = hand_item.components.container:GetItemInSlot(1)
+        if inner_item and inner_item.components.batteryuser then
+            local is_full = inner_item.components.fueled and inner_item.components.fueled:IsFull()
+            if not is_full then
+                table.insert(current_ids, "hand_inner")
+            end
+        end
+    end
+
+    if hand_item and hand_item.components.batteryuser then
+        local is_full = hand_item.components.fueled and hand_item.components.fueled:IsFull()
+        if not is_full then
+            table.insert(current_ids, "hand")
+        end
+    end
+
+    if not wx.components.upgrademoduleowner:ChargeIsMaxed() then
+        table.insert(current_ids, "player")
+    end
+
+    -- 2. 初始化队列并去重
+    wx._charge_queue = wx._charge_queue or {}
+    for _, id in ipairs(current_ids) do
+        local already = false
+        for _, q in ipairs(wx._charge_queue) do
+            if id == q then
+                already = true
+                break
+            end
+        end
+        if not already then
+            table.insert(wx._charge_queue, id)
+        end
+    end
+
+    -- 3. 队列为空或没有电荷则返回
+    if #wx._charge_queue == 0 or wx._charge_stored <= 0 then
         return
     end
 
-    -- 每 tick 消耗的电荷量
-    local charge_per_item = 1  -- 每个用电器消耗 1 电荷
+    -- 4. 处理队首
+    local id = wx._charge_queue[1]
 
-    -- 1. 遍历主物品栏
-    local num_slots = inventory:GetNumSlots()
-    local backpack = inventory:GetEquippedItem(EQUIPSLOTS.BACK)
-    if backpack and backpack.components.container then
-        num_slots = num_slots - backpack.components.container:GetNumSlots()
-    end
-
-    for i = 1, num_slots do
-        local item = inventory:GetItemInSlot(i)
-        if item and item.components.batteryuser then
-            local success = item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
-            if success then
-                wx._charge_stored = wx._charge_stored - charge_per_item
-            end
-            if wx._charge_stored <= 0 then
-                return
+    -- 玩家特殊处理
+    if id == "player" then
+        local current = wx.components.upgrademoduleowner:GetChargeLevel()
+        local max = wx.components.upgrademoduleowner:GetMaxChargeLevel()
+        local needed = max - current
+        local actual = math.min(needed, wx._charge_stored)
+        if actual > 0 then
+            wx.components.upgrademoduleowner:AddCharge(actual)
+            wx._charge_stored = wx._charge_stored - actual
+            if wx.components.upgrademoduleowner:ChargeIsMaxed() then
+                table.remove(wx._charge_queue, 1)
             end
         end
+        return
     end
 
-    -- 2. 检查手持物品
-    local hand_item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-    if hand_item then
-        if hand_item:HasTag("lightsword") and hand_item.components.container then
-            local container = hand_item.components.container
-            for i = 1, container:GetNumSlots() do
-                local inner_item = container:GetItemInSlot(i)
-                if inner_item and inner_item.components.batteryuser then
-                    local success = inner_item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
-                    if success then
-                        wx._charge_stored = wx._charge_stored - charge_per_item
+    -- 物品通用处理：根据标识符获取 target
+    local target = nil
+    if id == "hand" then
+        target = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+    elseif id == "hand_inner" then
+        local hand = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+        if hand and hand:HasTag("lightsword") and hand.components.container then
+            target = hand.components.container:GetItemInSlot(1)
+        end
+    elseif type(id) == "number" then
+        target = inventory:GetItemInSlot(id)
+    else
+        table.remove(wx._charge_queue, 1)
+        return
+    end
+
+    if not target or not target.components.batteryuser then
+        table.remove(wx._charge_queue, 1)
+        return
+    end
+
+    -- 统一物品充电逻辑
+    local chargemultfn = target.components.batteryuser.chargemultfn
+    local onbatteryused = target.components.batteryuser.onbatteryused
+    if chargemultfn and onbatteryused then
+        local needed = chargemultfn(target, wx)
+        if needed and needed > 0 then
+            local actual = math.min(needed, wx._charge_stored)
+            if actual > 0 then
+                if onbatteryused(target, wx, actual) then
+                    wx._charge_stored = wx._charge_stored - actual
+                    if target.components.fueled and target.components.fueled:IsFull() then
+                        table.remove(wx._charge_queue, 1)
                     end
-                    if wx._charge_stored <= 0 then
-                        return
-                    end
+                else
+                    table.remove(wx._charge_queue, 1)
                 end
             end
+        else
+            table.remove(wx._charge_queue, 1)
         end
-
-        if hand_item.components.batteryuser then
-            local success = hand_item.components.batteryuser:ChargeFromBattery(wx, charge_per_item)
-            if success then
-                wx._charge_stored = wx._charge_stored - charge_per_item
-            end
-        end
+    else
+        table.remove(wx._charge_queue, 1)
     end
 end
 
@@ -418,21 +531,6 @@ AddClassPostConstruct("widgets/upgrademodulesdisplay", function(self)
                 -- 替换芯片符号
                 new_chip:GetAnimState():OverrideSymbol("movespeed2_chip", "status_alice", dianlu[modname])
 
-                -- 为 alc_charge 添加按钮（按线路分组存储）
-                if modname == "alc_charge" then
-                    self.chipbutton = self.chipbutton or {}
-                    self.chipbutton[bartype] = self.chipbutton[bartype] or {}
-                    if self.chipbutton[bartype][idx] == nil then
-                        local btn = new_chip:AddChild(ImageButton("images/ui/select.xml", "select.tex"))
-                        btn:SetScale(.5, .5, .5)
-                        btn:SetPosition(-80, 0, 0)
-                        btn:SetOnClick(function()
-                            SendModRPCToServer(MOD_RPC["alice"]["alic_charge"], idx)
-                            btn:OnSelect()
-                        end)
-                        self.chipbutton[bartype][idx] = btn
-                    end
-                end
                 break
             end
         end
@@ -443,6 +541,48 @@ AddClassPostConstruct("widgets/upgrademodulesdisplay", function(self)
         self.battery_frame:GetAnimState():SetBank("status_alice")
         self.battery_frame:GetAnimState():SetBuild("status_alice")
         self.battery_frame:GetAnimState():PlayAnimation("aliceframe")
+    end
+end)
+
+-- ============================================================
+-- 覆盖新交互窗口 UI（新增）
+-- ============================================================
+AddClassPostConstruct("widgets/upgrademodulesdisplay_inspecting", function(self)
+    local oldOnModuleAdded = self.OnModuleAdded
+
+    self.OnModuleAdded = function(self, bartype, moduledefinition_index, init)
+        -- 先调用原版逻辑
+        if oldOnModuleAdded then
+            oldOnModuleAdded(self, bartype, moduledefinition_index, init)
+        end
+
+        local module_def = GetModuleDefinitionFromNetID(moduledefinition_index)
+        if module_def == nil then
+            return
+        end
+
+        local modname = module_def.name
+        for _, v in pairs(modmodule) do
+            if modname == v then
+                local pool = self.chip_objectpools[bartype]
+                if pool == nil then return end
+                local idx = self.chip_poolindexes[bartype] - 1
+                local new_chip = pool[idx]
+                if new_chip == nil then return end
+
+                -- 替换芯片符号（新窗口使用的是 status_wx_chest 或 overrideuibuild）
+                -- 但既然你的资源在 status_alice 里，直接指定
+                new_chip:GetAnimState():OverrideSymbol("movespeed2_chip", "status_alice", dianlu[modname])
+                -- 新窗口还有 glow 和 symbol 子对象，也需要覆盖
+--[[                 if new_chip.glow then
+                    new_chip.glow:GetAnimState():OverrideSymbol("movespeed2_chip", "status_alice", dianlu[modname])
+                end
+                if new_chip.symbol then
+                    new_chip.symbol:GetAnimState():OverrideSymbol("movespeed2_chip", "status_alice", dianlu[modname])
+                end ]]
+                break
+            end
+        end
     end
 end)
 
@@ -466,27 +606,3 @@ end
 
 local function OnShieldUnloaded(inst, data)
 end
-
-AddPrefabPostInit("wx78module_alc_charge", function(inst)
-    if not TheWorld.ismastersim then
-        return inst
-    end
-    
-    inst:AddComponent("container")
-    inst.components.container:WidgetSetup("wx78module_alc_charge")
-	inst.components.container.canbeopened = true
-    inst.components.container.stay_open_on_hide = true
-    inst:ListenForEvent("itemget", OnShieldLoaded)
-    inst:ListenForEvent("itemlose", OnShieldUnloaded)
-
-
-    local olfn = inst.components.finiteuses.onfinished
-    inst.components.finiteuses.onfinished = function(self, fn, ...)
-        for k = 1, 2 do
-            inst.components.container:DropItemBySlot(k)
-        end
-        if olfn then
-            olfn(self, fn, ...)
-        end
-    end
-end)

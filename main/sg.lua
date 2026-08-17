@@ -75,7 +75,7 @@ local function Hooklightsword(sg)
         local doer = action.doer
         if invobject and invobject:HasTag("lightsword") and invobject.components.alice_sword then
             local mode = invobject.components.alice_sword:GetCurrentMode() or 0
-            if not invobject.components.alice_sword:Checkfiniteuses() then
+            if not invobject.components.alice_sword:CheckFuelUses() then
                 if doer and doer.components.talker then
                     doer.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.NOFINITINESS)
                 end
@@ -375,7 +375,7 @@ local alice_shot_fire = State{
                 equip.components.alice_sword:DoItemUse()
             end
             if inst.alc_lmb == "up" or not (equip and equip.components.alice_sword and equip.components.alice_sword:GetCurrentMode() == 4 
-                and equip.components.alice_sword:Checkfiniteuses()) then
+                and equip.components.alice_sword:CheckFuelUses()) then
                 inst.sg:GoToState("idle")
             end
             inst._laser_heat = (inst._laser_heat or 0) + TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_GAIN_PER_SECOND * dt
