@@ -248,21 +248,19 @@ end
 
 -- 在alice_broom.lua中找到原版can_cast_fn的获取位置，替换为：
 local original_can_cast_fn = can_cast_fn
-local function safe_can_cast(doer, target, pos)
+local function safe_can_cast(doer, target, pos, tool)
     return doer ~= nil
         and doer:IsValid()
         and target ~= nil 
         and target:IsValid() 
-        and original_can_cast_fn(doer, target, pos)
+        and original_can_cast_fn(doer, target, pos, tool)
 end
 
 local function ReskinTarget(inst, doer, target)
-    if safe_can_cast(doer, target, nil) then
-        -- print("[Debug] ReskinTarget called for:", target.prefab)
+    if safe_can_cast(doer, target, nil, inst) then
         spellCB(inst, target, nil, doer)
         return true
     end
-    -- print("[Debug] ReskinTarget failed for:", target.prefab)
     return false
 end
 
@@ -272,91 +270,75 @@ if TUNING.ALICE_BROOM_PICKUP_RADIUS == nil then
     -- print("[Debug] TUNING.ALICE_BROOM_PICKUP_RADIUS was nil. Set to default value: 15")
 end
 
--- 拾取功能（修复后）
+-- 拾取功能（优化版：不可堆叠直接拾取，可堆叠批量拾取）
 local function PickUpItems(inst, doer, target)
-    if target == nil or not target:IsValid() then
+    if not target or not target:IsValid() then
         return false
     end
-
-    -- 确保 doer 是玩家实体并具有 inventory 组件
-    if not doer.components.inventory then
-        -- print("[Debug] PickUpItems: Doer is not a valid player entity.")
+    if not doer or not doer.components.inventory then
         return false
     end
-
-    -- 确保目标具有 inventoryitem 组件
     if not target.components.inventoryitem then
-        -- print("[Debug] PickUpItems: Target does not have an inventoryitem component. Target:", target.prefab)
+        return false
+    end
+    --[[ if target.components.container or target:HasTag("bundle") or target:HasTag("alice_remote") then
+        return false
+    end ]]
+    if target:HasOneOfTags({"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}) 
+        or target.components.inventoryitem.nobounce then
         return false
     end
 
-    -- 忽略具有 container 组件的物品，以防止数据丢失
-    if target.components.container or target:HasTag("bundle") or target:HasTag("alice_remote") then
-        
-        return false
+    -- 判断是否可堆叠
+    local function IsStackable(item)
+        return item.components.stackable and item.components.stackable:IsStack()
     end
 
+    -- 不可堆叠物品：直接拾取原物品，不进行批量
+    if not IsStackable(target) then
+        return doer.components.inventory:GiveItem(target)
+    end
+
+    -- 可堆叠物品：走批量拾取逻辑
     local x, y, z = target.Transform:GetWorldPosition()
-    if x == nil or y == nil or z == nil then
-        return false
-    end
+    if not x then return false end
 
-    -- 确保搜索半径有效
-    local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS
-    if type(radius) ~= "number" or radius <= 0 then
-        radius = 15
-    end
-
-    -- 排除不可拾取物品
-    -- issue #5 need to handle this
-    local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
-    if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
-        return false
-    end
-
-    -- 查找目标及其周围同类物品
+    local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS or 15
     local target_prefab = target.prefab
+    local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     local items = TheSim:FindEntities(x, y, z, radius, nil, exclude_tags)
 
-    -- 计算总堆叠数量
     local total_stack_size = 0
     local max_stack_size = 400
-    local dropped_items = {} -- 用于存储未能拾取的物品
+    local dropped_items = {}
+
     for _, item in ipairs(items) do
         if item.prefab == target_prefab 
             and item.components.inventoryitem 
             and item.components.inventoryitem.canbepickedup 
             and not item:IsInLimbo() 
-            and not item.components.container -- 忽略容器物品
-            and item.prefab ~= "bullkelp_beachedroot" -- 忽略海带根，暂且这么处理。等待更好的过滤方法
+            and not item.components.container 
+            and item.prefab ~= "bullkelp_beachedroot" 
+            and IsStackable(item)  -- 只处理可堆叠物品
         then
-            local stack_size = 1
-            if item.components.stackable then
-                stack_size = item.components.stackable:StackSize()
-            end
-
-            -- 检查是否会超过上限
+            local stack_size = item.components.stackable:StackSize()
             if total_stack_size + stack_size > max_stack_size then
                 break
             end
-
             total_stack_size = total_stack_size + stack_size
-            item:Remove() -- 移除地面上的物品
+            item:Remove()
         end
     end
 
     if total_stack_size > 0 then
-        -- 使用 for 循环逐个生成物品并添加到玩家物品栏
         for i = 1, total_stack_size do
             local new_item = SpawnPrefab(target_prefab)
             if not doer.components.inventory:GiveItem(new_item) then
-                -- 背包满时将物品存储到 dropped_items 表中
                 table.insert(dropped_items, new_item)
             end
         end
     end
 
-    -- 将未能拾取的物品掉落在玩家附近
     if #dropped_items > 0 then
         for _, item in ipairs(dropped_items) do
             local px, py, pz = doer.Transform:GetWorldPosition()
@@ -619,7 +601,7 @@ local function tool_fn()
         end
 
         -- 1. 换肤（最高优先级）
-        if safe_can_cast(doer, target, pos) then
+        if safe_can_cast(doer, target, pos, inst) then
             spellCB(inst, target, pos, doer)
             return true
         end
@@ -643,7 +625,7 @@ local function tool_fn()
         end
 
         -- 只要任一功能可用就返回 true
-        local can_reskin = safe_can_cast(doer, target, pos)
+        local can_reskin = safe_can_cast(doer, target, pos, inst)
         local can_harvest = target.components.pickable and target.components.pickable:CanBePicked()
         local can_pickup = target.components.inventoryitem and not target:HasTag("heavy")
 
