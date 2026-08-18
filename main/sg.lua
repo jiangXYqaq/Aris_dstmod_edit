@@ -136,52 +136,6 @@ end
 AddStategraphPostInit("wilson", Hooklightsword)
 AddStategraphPostInit("wilson_client", Hooklightsword_clinet)
 
-local function StartCoolingTask(inst)
-    -- 如果已有散热任务，先取消
-    if inst._cooling_task then
-        inst._cooling_task:Cancel()
-        inst._cooling_task = nil
-    end
-
-    -- 如果热量已经为0，无需启动
-    if (inst._laser_heat or 0) <= 0 then
-        return
-    end
-
-    inst._cooling_task = inst:DoPeriodicTask(0.1, function()
-        local season = TheWorld.state.season
-        local cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SPRING
-        if season == "summer" then
-            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SUMMER
-        elseif season == "winter" then
-            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_WINTER
-        elseif season == "autumn" then
-            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_AUTUMN
-        end
-
-        inst._laser_heat = math.max(0, inst._laser_heat - cool_rate * 0.1)
-
-        -- 热量归零 → 取消任务 + 解锁技能
-        if inst._laser_heat <= 0 then
-            inst._laser_heat = 0
-            if inst._cooling_task then
-                inst._cooling_task:Cancel()
-                inst._cooling_task = nil
-            end
-            if inst.components.wx78_abilitycooldowns then
-                inst.components.wx78_abilitycooldowns:StopAbilityCooldown("alice_laser_overheat")
-            end
-        end
-    end)
-end
-
-local function StopCoolingTask(inst)
-    if inst._cooling_task then
-        inst._cooling_task:Cancel()
-        inst._cooling_task = nil
-    end
-end
-
 --RPC
 ALC_UpdateAOETargeting = function(player, cancel)
     local controller = player and player.components.playercontroller
@@ -210,6 +164,71 @@ end
 
 local function GetWeapon_Client(inst)
     return inst.replica.inventory and inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+end
+
+-- ===== 模式4：散热任务 =====
+local function StartOverheatCoolingTask(inst)
+    if inst._cooling_task then
+        inst._cooling_task:Cancel()
+        inst._cooling_task = nil
+    end
+
+    if (inst._laser_heat or 0) <= 0 then
+        return
+    end
+
+    inst._cooling_task = inst:DoPeriodicTask(0.1, function()
+        local season = TheWorld.state.season
+        local cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SPRING
+        if season == "summer" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_SUMMER
+        elseif season == "winter" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_WINTER
+        elseif season == "autumn" then
+            cool_rate = TUNING.ALICE_LIGHTSWORD_MODE4_COOL_RATE_AUTUMN
+        end
+
+        inst._laser_heat = math.max(0, inst._laser_heat - cool_rate * 0.1)
+
+        if inst._laser_heat <= 0 then
+            inst._laser_heat = 0
+            if inst._cooling_task then
+                inst._cooling_task:Cancel()
+                inst._cooling_task = nil
+            end
+            if inst.components.wx78_abilitycooldowns 
+            and inst.components.wx78_abilitycooldowns:IsInCooldown("alice_laser_overheat") then
+                inst.components.wx78_abilitycooldowns:StopAbilityCooldown("alice_laser_overheat")
+                local equip = GetWeapon_Master(inst)
+                if equip and equip:HasTag("lightsword") and inst.components.talker then
+                    inst.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.OVERHEAT_COOLED)
+                end
+            end
+        end
+    end)
+end
+
+local function StopOverheatCoolingTask(inst)
+    if inst._cooling_task then
+        inst._cooling_task:Cancel()
+        inst._cooling_task = nil
+    end
+end
+
+-- ===== 模式3：冷却提示任务 =====
+local function StartCooldownReminderTask(inst)
+    if inst._cooldown_reminder_task then
+        inst._cooldown_reminder_task:Cancel()
+        inst._cooldown_reminder_task = nil
+    end
+
+    inst._cooldown_reminder_task = inst:DoTaskInTime(TUNING.LIGHTSWORDCD, function()
+        inst._cooldown_reminder_task = nil
+        local equip = GetWeapon_Master(inst)
+        if equip and equip:HasTag("lightsword") and inst.components.talker then
+            inst.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.CHARGE_READY)
+        end
+    end)
 end
 
 -----------------------------------------------------
@@ -297,7 +316,7 @@ AddStategraphState("wilson_client", alice_charge_pre_client)
 -----------------------------------------------------
 -------------------alice_shot_fire-------------------
 -----------------------------------------------------
---MODE 4 攻击相关逻辑
+--模式4 攻击相关逻辑
 local alice_shot_fire = State{
         name = "alice_shot_fire",
         tags = { "doing", "alice_shot", "moving", "running"},
@@ -313,7 +332,7 @@ local alice_shot_fire = State{
             end
             
             -- 冷却未锁定，取消散热任务（射击时不应散热）
-            StopCoolingTask(inst)
+            StopOverheatCoolingTask(inst)
 
             inst.components.locomotor:Stop()
             inst.AnimState:PlayAnimation("alice_powershot_loop", true)
@@ -364,11 +383,11 @@ local alice_shot_fire = State{
                 equip:RemoveTag("fireatk")
             end
             if inst._laser_heat and inst._laser_heat > 0 then
-                StartCoolingTask(inst)
+                StartOverheatCoolingTask(inst)
             end
         end,
 
-        onupdate = function(inst)
+        onupdate = function(inst, dt)
 			CommonUpdate(inst, dt)
             local equip = GetWeapon_Master(inst)
             if equip and equip.components.alice_sword then
@@ -381,6 +400,9 @@ local alice_shot_fire = State{
             inst._laser_heat = (inst._laser_heat or 0) + TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_GAIN_PER_SECOND * dt
             if inst._laser_heat >= TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_MAX then
                 inst._laser_heat = TUNING.ALICE_LIGHTSWORD_MODE4_HEAT_MAX
+                if equip and equip:HasTag("lightsword") and inst.components.talker then
+                    inst.components.talker:Say(STRINGS.ACTIONS.LIGHTSWORD.OVERHEAT)
+                end
                 if inst.components.wx78_abilitycooldowns then
                     inst.components.wx78_abilitycooldowns:RestartAbilityCooldown("alice_laser_overheat", 999)
                 end
@@ -598,6 +620,7 @@ local alice_charge_pst = State{
                             TUNING.LIGHTSWORDCD
                         )
                     end
+                    StartCooldownReminderTask(inst)
                 end 
             end),
         },
