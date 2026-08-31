@@ -73,6 +73,35 @@ local function ondeath(inst, data)
     end
 end
 
+--对窃贼造成200点伤害
+local function PunishOffender(inst, offender)
+    if offender:IsValid() and offender.components.combat then
+        -- 造成200点雷电伤害
+        offender.components.combat:GetAttacked(inst, 200, nil, "electric")
+    end
+end
+-- 通用偷窃处理函数（适用于任何实体）
+local function OnItemStolen(inst, data)
+    if data and data.thief and data.thief:IsValid() then
+        PunishOffender(inst, data.thief)  -- 使用统一惩罚函数
+    end
+end
+-- 通用被攻击处理函数（使用标准事件命名）
+local function OnAttacked(inst, data)
+    -- 确保是被攻击而不是攻击别人
+    if data and data.target == inst then
+        if data.attacker and data.attacker:IsValid() then
+            local attacker = data.attacker
+            local weapon = attacker.components.combat and 
+                           attacker.components.combat:GetWeapon()
+            
+            -- 检查武器是否为cutless
+            if weapon and weapon.prefab == "cutless" then
+                PunishOffender(inst, attacker)  -- 使用统一惩罚函数
+            end
+        end
+    end
+end
 local function CanMorph(inst)
     if inst._chesterstate:value() ~= ChesterState.NORMAL then
         return false
@@ -308,6 +337,19 @@ local function fn()
 
     inst:ListenForEvent("death", ondeath)
     inst:ListenForEvent("onclose", CheckForMorph)
+    inst:ListenForEvent("onitemstolen", function(inst, data)
+        -- 确保事件数据有效且小偷存在
+        if data and data.thief and data.thief:IsValid() then
+            -- 获取战斗组件
+            local combat = data.thief.components.combat
+            
+            -- 如果小偷有战斗组件，则造成伤害
+            if combat then
+                -- 造成200点雷电属性伤害，伤害来源为自身
+                combat:GetAttacked(inst, 200, nil, "electric")
+            end
+        end
+    end)
 
 	inst.OnLoad = OnLoad
 	inst.OnSave = OnSave

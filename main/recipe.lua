@@ -11,22 +11,21 @@ AddCharacterRecipe("alice_lightsword",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "WEAPONS", "TOOLS"}
 )
 
 --- 扫把
 AddCharacterRecipe("alice_broom",
     {
         Ingredient("cutreeds", 10),
-        --Ingredient("orangestaff", 1),  -- 懒人魔杖
         Ingredient("reskin_tool", 1),
-        Ingredient("poop", 4),       -- 新增体现农业属性的材料
+        Ingredient("poop", 4),
     },
     TECH.NONE,
     {
         builder_tag = "alice",
     },
-    {"MODS"}
+    {"MODS", "TOOLS", "SURVIVAL"}
 )
 
 --- 电池
@@ -38,7 +37,7 @@ AddCharacterRecipe("alice_battery",
     {
         builder_tag = "alice",
     },
-    {"MODS"}
+    {"MODS", "REFINE", "PROTOTYPERS"}
 )
 
 --- 外套
@@ -54,7 +53,7 @@ AddCharacterRecipe("alice_battlecoat",
         atlas = "images/inventoryimages/alice_coat.xml",
         image = "alice_coat.tex",
     },
-    {"MODS"}
+    {"MODS", "ARMOUR", "CLOTHING"}
 )
 
 --- 女仆装
@@ -68,7 +67,7 @@ AddCharacterRecipe("alice_maidcoat",
     {
         builder_tag = "alice",
     },
-    {"MODS"}
+    {"MODS", "ARMOUR", "CLOTHING"}
 )
 
 -- 连射模式
@@ -86,15 +85,17 @@ AddCharacterRecipe("alice_mode1",
 )
 
 -- 能量炮弹模块
-AddCharacterRecipe("alice_mode2",
+AddRecipe2("alice_mode2",
     {
         Ingredient("trinket_5", 1),
         Ingredient("gears", 1),
         Ingredient("transistor", 4),
+        Ingredient("alice_lightsword", 0),
     },
     TECH.LOST,
     {
-        builder_tag = "alice",
+        product = "alice_mode2",
+        numtogive = 1,
     },
     {"MODS", "WEAPONS"}
 )
@@ -114,29 +115,35 @@ AddCharacterRecipe("alice_mode3",
 )
 
 -- 高能激光刀刃模块（启迪碎片配方）
-AddRecipe2(
-    "alice_mode4_shard", -- Unique recipe name
+AddCharacterRecipe("alice_mode4_shard",
     {
         Ingredient("alterguardianhatshard", 1),
         Ingredient("gears", 1),
         Ingredient("transistor", 4),
     },
     TECH.NONE,
-    {product = "alice_mode4", numtogive = 1}, -- Produces the prefab "alice_mode4"
-    {"MODS", "WEAPONS","CHARACTER"}
+    {
+        builder_tag = "alice",
+        product = "alice_mode4",
+        numtogive = 1,
+    },
+    {"MODS", "WEAPONS"}
 )
 
 -- 高能激光刀刃模块（骷髅盔甲配方）
-AddRecipe2(
-    "alice_mode4_skeleton", -- Unique recipe name
+AddCharacterRecipe("alice_mode4_skeleton",
     {
         Ingredient("armorskeleton", 1),
         Ingredient("gears", 1),
         Ingredient("transistor", 4),
     },
     TECH.NONE,
-    {product = "alice_mode4", numtogive = 1}, -- Produces the prefab "alice_mode4"
-    {"MODS", "WEAPONS", "CHARACTER"}
+    {
+        builder_tag = "alice",
+        product = "alice_mode4",
+        numtogive = 1,
+    },
+    {"MODS", "WEAPONS"}
 )
 
 -- 木制防护板
@@ -148,7 +155,7 @@ AddCharacterRecipe("wooden_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
 -- 金属防护板
@@ -160,7 +167,7 @@ AddCharacterRecipe("metal_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
 -- 位面材料防护板
@@ -175,7 +182,7 @@ AddCharacterRecipe("dread_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
 -- 复合材料防护板
@@ -188,7 +195,7 @@ AddCharacterRecipe("dimensional_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
 -- 针刺防护板
@@ -201,7 +208,7 @@ AddCharacterRecipe("thorn_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
 -- 暗影防护板
@@ -214,83 +221,87 @@ AddCharacterRecipe("shadow_shield",
     {
         builder_tag = "alice",
     },
-    {"MODS", "WEAPONS"}
+    {"MODS", "ARMOUR"}
 )
 
--- 添加烂电线配方 (金块+树枝)
-AddRecipe2(
-    "alice_trinket_6",  -- 配方名称添加前缀
+-- 烂电线配方
+AddCharacterRecipe("alice_trinket_6",
     {
         Ingredient("goldnugget", 4),
-        Ingredient("twigs", 8)
+        Ingredient("twigs", 8),
     },
     TECH.NONE,
     {
-        product = "trinket_6",  -- 输出物品
-        numtogive = 4           -- 产出数量
+        builder_tag = "alice",
+        no_deconstruction = true,
+        product = "trinket_6",
+        numtogive = 4,
     },
-    {"MODS", "CHARACTER"}  -- 标签
+    {"MODS", "REFINE"}
 )
 
--- 添加废料配方 (烂电线+燧石)
-AddRecipe2(
-    "alice_wagpunk_bits",
+-- 废料配方
+AddCharacterRecipe("alice_wagpunk_bits",
     {
         Ingredient("trinket_6", 3),
-        Ingredient("flint", 5)
+        Ingredient("flint", 5),
     },
     TECH.NONE,
     {
+        builder_tag = "alice",
+        no_deconstruction = true,
         product = "wagpunk_bits",
-        numtogive = 4
+        numtogive = 4,
     },
-    {"MODS", "CHARACTER"}
+    {"MODS", "REFINE"}
 )
 
--- 添加电子元件配方 (烂电线+石砖)
-AddRecipe2(
-    "alice_transistor",
+-- 电子元件配方
+AddCharacterRecipe("alice_transistor",
     {
         Ingredient("trinket_6", 2),
-        Ingredient("cutstone", 4)
+        Ingredient("rocks", 6),
     },
     TECH.NONE,
     {
+        builder_tag = "alice",
+        no_deconstruction = true,
         product = "transistor",
-        numtogive = 4
+        numtogive = 4,
     },
-    {"MODS", "CHARACTER"}
+    {"MODS", "REFINE"}
 )
 
--- 添加齿轮配方 (2废料+2石砖)
-AddRecipe2(
-    "alice_gears",  -- 配方名称添加前缀
+-- 齿轮配方
+AddCharacterRecipe("alice_gears",
     {
         Ingredient("wagpunk_bits", 2),
-        Ingredient("cutstone", 2)
+        Ingredient("rocks", 4),
     },
     TECH.NONE,
     {
+        builder_tag = "alice",
+        no_deconstruction = true,
         product = "gears",
-        numtogive = 1
+        numtogive = 1,
     },
-    {"MODS", "CHARACTER"}
+    {"MODS", "REFINE"}
 )
 
--- 添加启迪之冠碎片配方
-AddRecipe2(
-    "alice_alterguardianhatshard",  -- 配方名称（添加alice前缀）
+-- 启迪之冠碎片配方
+AddRecipe2("alice_alterguardianhatshard",
     {
-        Ingredient("purebrilliance", 2),  -- 2纯粹辉煌
-        Ingredient("bluegem", 1),         -- 1蓝宝石
-        Ingredient("moonrocknugget", 3)   -- 3月岩
+        Ingredient("purebrilliance", 2),
+        Ingredient("bluegem", 1),
+        Ingredient("moonrocknugget", 3),
+        Ingredient("alice_lightsword", 0),
     },
-    TECH.LOST,  -- 指定为LOST科技等级
+    TECH.LOST,
     {
-        product = "alterguardianhatshard",  -- 产出物品
-        numtogive = 1                       -- 产出数量
+        product = "alterguardianhatshard",
+        numtogive = 1,
     },
-    {"MODS", "CHARACTER"}  -- 标签
+    {"MODS", "REFINE"}
 )
 
 -- 充能电路
@@ -304,7 +315,7 @@ AddCharacterRecipe("wx78module_alc_charge",
         atlas = "images/inventoryimages/alice_moudle.xml",
         image = "alc_charge.tex",
     },
-    {"MODS"}
+    {"MODS", "PROTOTYPERS", "MAGIC"}
 )
 
 -- 强化魔法
@@ -321,7 +332,7 @@ AddCharacterRecipe("wx78module_alc_magic",
         atlas = "images/inventoryimages/alice_moudle.xml",
         image = "alc_magic.tex",
     },
-    {"MODS", "CRAFTING_STATION"}
+    {"MODS", "MAGIC"}
 )
 
 -- 光之勇者
@@ -338,7 +349,7 @@ AddCharacterRecipe("wx78module_alc_battle",
         atlas = "images/inventoryimages/alice_moudle.xml",
         image = "alc_battle.tex",
     },
-    {"MODS", "CRAFTING_STATION"}
+    {"MODS", "WEAPONS", "ARMOUR"}
 )
 
 -- 手机
@@ -354,7 +365,7 @@ AddCharacterRecipe("alice_remote",
         atlas = "images/inventoryimages/alice_remote.xml",
         image = "alice_remote_on.tex",
     },
-    {"MODS"}
+    {"MODS", "TOOLS", "PROTOTYPERS"}
 )
 
 -- 墨镜
@@ -363,7 +374,7 @@ AddCharacterRecipe("alice_glasses",
         Ingredient("moonglass", 6),
         Ingredient("nightmarefuel", 6),
         Ingredient("twigs", 4),
-        Ingredient("glommerfuel", 2),
+        Ingredient("greengem", 1),
     },
     TECH.NONE,
     {
@@ -374,7 +385,7 @@ AddCharacterRecipe("alice_glasses",
     {"MODS", "CLOTHING"}
 )
 
--- 注册贴图
+-- 注册贴图（保持不变）
 local function registerItemAtlas(itemList, xmlFile)
     for _, item in ipairs(itemList) do
         RegisterInventoryItemAtlas(resolvefilepath("images/inventoryimages/" .. xmlFile), item .. ".tex")

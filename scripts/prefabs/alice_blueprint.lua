@@ -8,7 +8,7 @@ local assets =
     Asset("INV_IMAGE", "blueprint_rare"),
 }
 
-local UpvalueHacker = require("alice_utils/utils")
+local UpvalueHacker = require("alice_utils/utils") 
 
 local fn = UpvalueHacker.FindUpvalue(Prefabs["blueprint"].fn, "fn")
 
@@ -35,24 +35,23 @@ local function MakeSpecificBlueprint(specific_item)
         local r = GetValidRecipe(specific_item)
         inst.recipetouse = r ~= nil and not r.nounlock and r.name or "unknown"
         inst.components.teacher:SetRecipe(inst.recipetouse)
+        
+        -- 获取配方产出物品的名称
+        local product_name = r and r.product and STRINGS.NAMES[string.upper(r.product)] or STRINGS.NAMES.UNKNOWN
         if is_rare then
-            inst.components.named:SetName(subfmt(STRINGS.NAMES.BLUEPRINT_RARE, { item = STRINGS.NAMES[string.upper(inst.recipetouse)] }))
+            inst.components.named:SetName(subfmt(STRINGS.NAMES.BLUEPRINT_RARE, { item = product_name }))
         else
-            inst.components.named:SetName(STRINGS.NAMES[string.upper(inst.recipetouse)].." "..STRINGS.NAMES.BLUEPRINT)
+            inst.components.named:SetName(product_name .. " " .. STRINGS.NAMES.BLUEPRINT)
         end
         return inst
     end
 end
 
-
-
 if fn then
-    table.insert(prefabs, Prefab("thorn_shield_blueprint", MakeSpecificBlueprint("thorn_shield"), assets))
-    table.insert(prefabs, Prefab("shadow_shield_blueprint", MakeSpecificBlueprint("shadow_shield"), assets))
-    table.insert(prefabs, Prefab("alice_mode2_blueprint", MakeSpecificBlueprint("alice_mode2"), assets))
-    table.insert(prefabs, Prefab("alice_remote_blueprint", MakeSpecificBlueprint("alice_remote"), assets))
+    -- 只添加启迪之冠碎片蓝图，删除其他蓝图
+    table.insert(prefabs, Prefab("alterguardianhatshard_blueprint", MakeSpecificBlueprint("alice_alterguardianhatshard"), assets))
 else
-    print"cant find MakeSpecificBlueprint"
+    print("cant find MakeSpecificBlueprint")
 end
 
 return unpack(prefabs)

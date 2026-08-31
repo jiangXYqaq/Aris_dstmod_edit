@@ -13,8 +13,6 @@ local assets =
 -- 如果需要实现该功能，请进一步修改 `actionpicker` 组件。
 -- 地图传送功能可以传送到漂浮平台上，可以传送到未探索的地形上。没有音效和特效。
 
-local UpvalueHacker = require("alice_utils/upvaluehacker")
-
 local function onequip(inst, owner)
     -- Progress: Map teleport logic is triggered when the broom is equipped.
     -- Ensure the owner is valid and pass it to EnableMapTeleport.
@@ -76,24 +74,193 @@ local function OnLoad(inst, data)
     end
 end
 
-local spellCB = UpvalueHacker.GetUpvalue(Prefabs["reskin_tool"].fn, "spellCB")
-local can_cast_fn = UpvalueHacker.GetUpvalue(Prefabs["reskin_tool"].fn, "can_cast_fn")
+local function GetNextSkin(userid, target, tool, skip_base)
+    local cached_skin = nil
+    local prefab_to_skin = target.prefab
+    local is_beard = false
+    local skin_custom = nil
+    if target.components.beard ~= nil and target.components.beard.is_skinnable then
+        prefab_to_skin = target.prefab .. "_beard"
+        is_beard = true
+    end
+    if target:IsValid() and tool:IsValid() and tool.parent and tool.parent:IsValid() then
+        local curr_skin = is_beard and target.components.beard.skinname or target.skinname
+        cached_skin = tool._cached_reskinname[prefab_to_skin]
+        local search_for_skin = cached_skin ~= nil --also check if it's owned
+        local force_change_cache
+        local must_have, must_not_have
+        if target.ReskinToolFilterFn ~= nil then
+            must_have, must_not_have = target:ReskinToolFilterFn()
+            if cached_skin then
+                if must_have ~= nil and not StringContainsAnyInArray(cached_skin, must_have) or must_not_have ~= nil and StringContainsAnyInArray(cached_skin, must_not_have) then
+                    force_change_cache = cached_skin
+                end
+            end
+        end
+        if force_change_cache or curr_skin == cached_skin or (search_for_skin and not TheInventory:CheckClientOwnership(userid, cached_skin)) or (cached_skin == nil and skip_base) then
+            local new_reskinname = nil
+    
+            local prefabskins = PREFAB_SKINS[prefab_to_skin]
+            if prefabskins ~= nil then
+                local unlockableskins = nil
+                local function UnlockableSkinDiffers(item_type)
+                    if UNLOCKABLE_SKINS[item_type] and target.ReskinToolCustomDataDiffers then
+                        if not unlockableskins then
+                            unlockableskins = TheInventory:GetClientUnlockableItems(userid)
+                        end
+                        if unlockableskins[item_type] then
+                            return target:ReskinToolCustomDataDiffers(unlockableskins[item_type].skin_custom)
+                        end
+                    end
+                    return false
+                end
+                local maxindex = #prefabskins
+                local foundskin = not search_for_skin
+                local i = 1
+                while i <= maxindex do
+                    local item_type = prefabskins[i]
+                    if item_type then
+                        local skip_this = PREFAB_SKINS_SHOULD_NOT_SELECT[item_type] or false
+                        if SKINS_EVENTLOCK[item_type] and not IsSpecialEventActive(SKINS_EVENTLOCK[item_type]) then
+                            skip_this = true
+                        end
+                        if not skip_this then
+                            if must_have ~= nil and not StringContainsAnyInArray(item_type, must_have) or must_not_have ~= nil and StringContainsAnyInArray(item_type, must_not_have) then
+                                skip_this = true
+                            end
+                            if not skip_this then
+                                if search_for_skin then
+                                    if cached_skin == item_type then
+                                        search_for_skin = false
+                                        if UnlockableSkinDiffers(item_type) then
+                                            new_reskinname = item_type
+                                            skin_custom = unlockableskins[item_type].skin_custom
+                                            break
+                                        end
+                                        if skip_base and i == maxindex then
+                                            i = 0 -- Restart the loop.
+                                        end
+                                    end
+                                elseif item_type ~= curr_skin then
+                                    if TheInventory:CheckClientOwnership(userid, item_type) then
+                                        new_reskinname = item_type
+                                        break
+                                    end
+                                elseif UnlockableSkinDiffers(item_type) then
+                                    new_reskinname = item_type
+                                    skin_custom = unlockableskins[item_type].skin_custom
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    i = i + 1
+                end
+            end
+            cached_skin = new_reskinname
+        end
+        if force_change_cache and force_change_cache == cached_skin then
+            cached_skin = nil
+        end
+    end
+    return cached_skin, prefab_to_skin, is_beard, skin_custom
+end
+
+-- spellCB（简化版，去掉特效部分）
+local function spellCB(tool, target, pos, caster)
+    target = target or caster
+    if not target then return end
+    
+    if target.reskin_tool_target_redirect and target.reskin_tool_target_redirect:IsValid() then
+        target = target.reskin_tool_target_redirect
+    end
+    if target._playerlink ~= nil and target._playerlink ~= caster then
+        return
+    end
+    if target.reskin_tool_cannot_target_this then
+        return
+    end
+
+    local userid = tool.parent and tool.parent.userid or ""
+    local skip_base = PREFAB_SKINS_SHOULD_NOT_SELECT[target.prefab]
+    local cached_skin, prefab_to_skin, is_beard, skin_custom = GetNextSkin(userid, target, tool, skip_base)
+    if cached_skin == nil and skip_base then
+        return
+    end
+    tool._cached_reskinname[prefab_to_skin] = cached_skin
+
+    -- 应用皮肤（去掉特效部分）
+    tool:DoTaskInTime(0, function()
+        if target:IsValid() and tool:IsValid() and tool.parent and tool.parent:IsValid() then
+            if is_beard then
+                target.components.beard:SetSkin(cached_skin)
+            else
+                TheSim:ReskinEntity(target.GUID, target.skinname, cached_skin, nil, userid)
+            end
+        end
+    end)
+end
+
+local function can_cast_fn(doer, target, pos, tool)
+    if target.reskin_tool_target_redirect and target.reskin_tool_target_redirect:IsValid() then
+        target = target.reskin_tool_target_redirect
+    end
+
+    -- NOTES(DiogoW): Expand this into a target function in case more cases are added.
+    if target._playerlink ~= nil and target._playerlink ~= doer then
+        return false -- Only our owner is allowed to change our skin.
+    end
+
+    if target.reskin_tool_cannot_target_this then
+        return false
+    end
+
+    local prefab_to_skin = target.prefab
+    local is_beard = false
+
+    if table.contains( DST_CHARACTERLIST, prefab_to_skin ) then
+        --We found a player, check if it's us
+        if doer.userid == target.userid and target.components.beard ~= nil and target.components.beard.is_skinnable then
+            prefab_to_skin = target.prefab .. "_beard"
+            is_beard = true
+        else
+            return false
+        end
+    end
+
+    local skip_base = PREFAB_SKINS_SHOULD_NOT_SELECT[target.prefab]
+    local cached_skin = GetNextSkin(doer.userid, target, tool, skip_base)
+    if cached_skin == nil and skip_base then
+        return false -- Client does not own any skin but they tried to reskin it anyway.
+    end
+    if cached_skin then
+        return true
+    end
+
+    --Is there a skin to turn off?
+    local curr_skin = is_beard and target.components.beard.skinname or target.skinname
+    if curr_skin ~= nil then
+        return true
+    end
+
+    return false
+end
 
 -- 在alice_broom.lua中找到原版can_cast_fn的获取位置，替换为：
 local original_can_cast_fn = can_cast_fn
-local function safe_can_cast(doer, target, pos)
-    return target ~= nil 
+local function safe_can_cast(doer, target, pos, tool)
+    return doer ~= nil
+        and doer:IsValid()
+        and target ~= nil 
         and target:IsValid() 
-        and original_can_cast_fn(doer, target, pos)
+        and original_can_cast_fn(doer, target, pos, tool)
 end
 
 local function ReskinTarget(inst, doer, target)
-    if safe_can_cast(doer, target, nil) then
-        -- print("[Debug] ReskinTarget called for:", target.prefab)
+    if safe_can_cast(doer, target, nil, inst) then
         spellCB(inst, target, nil, doer)
         return true
     end
-    -- print("[Debug] ReskinTarget failed for:", target.prefab)
     return false
 end
 
@@ -103,91 +270,75 @@ if TUNING.ALICE_BROOM_PICKUP_RADIUS == nil then
     -- print("[Debug] TUNING.ALICE_BROOM_PICKUP_RADIUS was nil. Set to default value: 15")
 end
 
--- 拾取功能（修复后）
+-- 拾取功能（优化版：不可堆叠直接拾取，可堆叠批量拾取）
 local function PickUpItems(inst, doer, target)
-    if target == nil or not target:IsValid() then
+    if not target or not target:IsValid() then
         return false
     end
-
-    -- 确保 doer 是玩家实体并具有 inventory 组件
-    if not doer.components.inventory then
-        -- print("[Debug] PickUpItems: Doer is not a valid player entity.")
+    if not doer or not doer.components.inventory then
         return false
     end
-
-    -- 确保目标具有 inventoryitem 组件
     if not target.components.inventoryitem then
-        -- print("[Debug] PickUpItems: Target does not have an inventoryitem component. Target:", target.prefab)
+        return false
+    end
+    --[[ if target.components.container or target:HasTag("bundle") or target:HasTag("alice_remote") then
+        return false
+    end ]]
+    if target:HasOneOfTags({"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}) 
+        or target.components.inventoryitem.nobounce then
         return false
     end
 
-    -- 忽略具有 container 组件的物品，以防止数据丢失
-    if target.components.container or target:HasTag("bundle") or target:HasTag("alice_remote") then
-        
-        return false
+    -- 判断是否可堆叠
+    local function IsStackable(item)
+        return item.components.stackable and item.components.stackable:IsStack()
     end
 
+    -- 不可堆叠物品：直接拾取原物品，不进行批量
+    if not IsStackable(target) then
+        return doer.components.inventory:GiveItem(target)
+    end
+
+    -- 可堆叠物品：走批量拾取逻辑
     local x, y, z = target.Transform:GetWorldPosition()
-    if x == nil or y == nil or z == nil then
-        return false
-    end
+    if not x then return false end
 
-    -- 确保搜索半径有效
-    local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS
-    if type(radius) ~= "number" or radius <= 0 then
-        radius = 15
-    end
-
-    -- 排除不可拾取物品
-    -- issue #5 need to handle this
-    local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
-    if target:HasOneOfTags(exclude_tags) or target.components.inventoryitem.nobounce then
-        return false
-    end
-
-    -- 查找目标及其周围同类物品
+    local radius = TUNING.ALICE_BROOM_PICKUP_RADIUS or 15
     local target_prefab = target.prefab
+    local exclude_tags = {"heavy", "irreplaceable", "nonpackable", "nosteal", "FX"}
     local items = TheSim:FindEntities(x, y, z, radius, nil, exclude_tags)
 
-    -- 计算总堆叠数量
     local total_stack_size = 0
     local max_stack_size = 400
-    local dropped_items = {} -- 用于存储未能拾取的物品
+    local dropped_items = {}
+
     for _, item in ipairs(items) do
         if item.prefab == target_prefab 
             and item.components.inventoryitem 
             and item.components.inventoryitem.canbepickedup 
             and not item:IsInLimbo() 
-            and not item.components.container -- 忽略容器物品
-            and item.prefab ~= "bullkelp_beachedroot" -- 忽略海带根，暂且这么处理。等待更好的过滤方法
+            and not item.components.container 
+            and item.prefab ~= "bullkelp_beachedroot" 
+            and IsStackable(item)  -- 只处理可堆叠物品
         then
-            local stack_size = 1
-            if item.components.stackable then
-                stack_size = item.components.stackable:StackSize()
-            end
-
-            -- 检查是否会超过上限
+            local stack_size = item.components.stackable:StackSize()
             if total_stack_size + stack_size > max_stack_size then
                 break
             end
-
             total_stack_size = total_stack_size + stack_size
-            item:Remove() -- 移除地面上的物品
+            item:Remove()
         end
     end
 
     if total_stack_size > 0 then
-        -- 使用 for 循环逐个生成物品并添加到玩家物品栏
         for i = 1, total_stack_size do
             local new_item = SpawnPrefab(target_prefab)
             if not doer.components.inventory:GiveItem(new_item) then
-                -- 背包满时将物品存储到 dropped_items 表中
                 table.insert(dropped_items, new_item)
             end
         end
     end
 
-    -- 将未能拾取的物品掉落在玩家附近
     if #dropped_items > 0 then
         for _, item in ipairs(dropped_items) do
             local px, py, pz = doer.Transform:GetWorldPosition()
@@ -411,6 +562,7 @@ local function tool_fn()
 
     inst:AddTag("nopunch")
     inst:AddTag("bramble_resistant") -- 添加 bramble_resistant 标签到装备本身
+    inst:AddTag("nosteal")
 
     inst.spelltype = "RESKIN"
 
@@ -441,80 +593,43 @@ local function tool_fn()
     inst.components.spellcaster.canuseontargets = true
     inst.components.spellcaster.canuseondead = true
     inst.components.spellcaster.veryquickcast = true
-    inst.components.spellcaster.canusefrominventory  = true
+    inst.components.spellcaster.canusefrominventory = true
 
     inst.components.spellcaster:SetSpellFn(function(inst, target, pos, doer)
-        -- 确保参数正确传递
-        if target == nil then
-            -- print("[Debug] SpellFn: Target is nil. Doer:", doer.prefab, "Position:", pos and (pos.x .. ", " .. pos.y .. ", " .. pos.z) or "nil")
+        if not target or not target:IsValid() then
             return false
         end
-    
-        if not target:IsValid() then
-            -- print("[Debug] SpellFn: Target is not valid:", target.prefab or "unknown")
-            return false
-        end
-    
-        -- print("[Debug] SpellFn: Valid target:", target.prefab)
-    
-        -- 如果 pos 为 nil，尝试从目标获取位置
-        if pos == nil then
-            local x, y, z = target.Transform:GetWorldPosition()
-            if x == nil or y == nil or z == nil then
-                -- print("[Debug] SpellFn: Unable to retrieve target's position.")
-                return false
-            end
-            pos = { x = x, y = y, z = z }
-            -- print("[Debug] SpellFn: Retrieved target position:", pos.x, pos.y, pos.z)
-        end
-        
-        -- 检查是否可以换肤
-        if safe_can_cast(doer, target, pos) then
-            -- print("[Debug] SpellFn: Attempting reskin")
+
+        -- 1. 换肤（最高优先级）
+        if safe_can_cast(doer, target, pos, inst) then
             spellCB(inst, target, pos, doer)
             return true
         end
 
-        -- 检查是否可以收获
+        -- 2. 收获
         if target.components.pickable and target.components.pickable:CanBePicked() then
-            -- print("[Debug] SpellFn: Attempting harvest")
             return HarvestItems(inst, doer, target)
         end
 
-        -- 检查是否可以拾取
+        -- 3. 拾取
         if target.components.inventoryitem and not target:IsInLimbo() then
-            -- print("[Debug] SpellFn: Attempting pickup")
             return PickUpItems(inst, doer, target)
         end
-    
-        -- print("[Debug] SpellFn: No valid action for target:", target.prefab)
+
         return false
     end)
-    
+
     inst.components.spellcaster:SetCanCastFn(function(doer, target, pos)
-        -- 确保参数正确传递
-        if target == nil then
-            -- print("[Debug] CanCastFn: Target is nil")
+        if not target or not target:IsValid() then
             return false
         end
-    
-        if not target:IsValid() then
-            -- print("[Debug] CanCastFn: Target is not valid:", target.prefab or "unknown")
-            return false
-        end
-    
-        -- 检查是否可以换肤
-        local can_reskin = safe_can_cast(doer, target, pos)
-    
-        -- 检查是否可以拾取
-        local can_pickup = target.components.inventoryitem and not target:HasTag("heavy")
-    
-        -- 检查是否可以收获
+
+        -- 只要任一功能可用就返回 true
+        local can_reskin = safe_can_cast(doer, target, pos, inst)
         local can_harvest = target.components.pickable and target.components.pickable:CanBePicked()
-    
-        -- print("[Debug] CanCastFn: can_reskin =", can_reskin, ", can_pickup =", can_pickup, ", can_harvest =", can_harvest, ", target =", target.prefab or "unknown")
-    
-        return can_reskin or can_pickup or can_harvest
+        local can_pickup = target.components.inventoryitem and not target:HasTag("heavy")
+
+        return can_reskin or can_harvest or can_pickup
     end)
 
     inst:AddComponent("fuel")

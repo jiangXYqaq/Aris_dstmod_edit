@@ -189,6 +189,9 @@ STRINGS.ACTIONS.LIGHTSWORD = {
     UI_TITLE = "Lightsword Information Panel",
     NEED_MODE = "Modules required to upgrade",
     MAX_LEVEL = "Already at maximum level",
+    CHARGE_READY = "Bong bong ka bong! Supernova charged, ready to launch!",
+    OVERHEAT = "Laser fire overheated—heatsink smoking!",
+    OVERHEAT_COOLED = "Cooled down! Laser ready to fire again!",
 }
 
 STRINGS.LIGHTSWORD_MODE = {

@@ -25,7 +25,8 @@ local RESISTANCES =
 }
 
 local function OnTakeDamage(inst, amount)
-    local item = inst.components.container:GetItemInSlot(1)
+    local num_slots = inst.components.container:GetNumSlots()
+    local item = inst.components.container:GetItemInSlot(num_slots)
     if item and item.components and item.components.finiteuses then
         item.components.finiteuses:Use(amount)
     end
@@ -198,6 +199,9 @@ local function onequip(inst, owner)
 end
 
 local function onunequip_maid(inst, owner)
+    if inst.components.container ~= nil then
+        inst.components.container:Close()
+    end
 	-- 新增：卸下时停止检测并重置
     if inst.UpdateInsulationTask ~= nil then
         inst.UpdateInsulationTask:Cancel()
@@ -222,6 +226,10 @@ local function onunequip_maid(inst, owner)
 end
 
 local function onequip_maid(inst, owner)
+    if inst.components.container ~= nil then
+        inst.components.container:Open(owner)
+    end
+
 	-- 新增：装备时激活温度检测
     if inst.UpdateInsulationTask == nil then
         inst.UpdateInsulationTask = inst:DoPeriodicTask(2, function()
@@ -248,59 +256,78 @@ local function onequip_maid(inst, owner)
 end
 
 local function OnShieldLoaded(inst, data)
-    if data and data.item then
-        inst.shield_prefab = data.item.prefab
-        local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
-        if owner then
-            owner:PushEvent("alice_coat_shield_loaded", {
-                item = data.item,
-                container = inst
-            })
-        end
-        inst.components.armor:InitIndestructible(data.item.abs_percent)
-        if data.item.planar then
-            inst.components.planardefense:SetBaseDefense(data.item.planar)
-        end
-
-        if data.item.bramble then
-            inst.bramble = true
-        end
-
-        if data.item.shield then
-           
-            inst.shield = true
-            inst.components.cooldown.onchargedfn = OnChargedFn
-            inst.lastmainshield = 0
-            --inst.components.cooldown:StartCharging(math.max(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN, inst.components.cooldown:GetTimeToCharged()))
-            inst.components.cooldown:StartCharging(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN)
-            
-        end
-
-        if data.item.prefab == "dread_shield" then
-            if data.item.restoretask ~= nil then -- should not happen
-                data.item.restoretask:Cancel()
-                data.item.restoretask = nil
+    if not data or not data.item then
+        return
+    end
+    
+    -- 只处理最后一个插板槽的物品
+    local num_slots = inst.components.container:GetNumSlots()
+    local slot_index = inst.components.container:GetItemSlot(data.item)
+    if slot_index ~= num_slots then
+        return
+    end
+    
+    -- 只处理带有插板标签的物品
+    if not data.item:HasTag("alice_shield") then
+        return
+    end
+    
+    -- 原有的插板加载逻辑
+    inst.shield_prefab = data.item.prefab
+    local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+    if owner then
+        owner:PushEvent("alice_coat_shield_loaded", {
+            item = data.item,
+            container = inst
+        })
+    end
+    inst.components.armor:InitIndestructible(data.item.abs_percent)
+    if data.item.planar then
+        inst.components.planardefense:SetBaseDefense(data.item.planar)
+    end
+    if data.item.bramble then
+        inst.bramble = true
+    end
+    if data.item.shield then
+        inst.shield = true
+        inst.components.cooldown.onchargedfn = OnChargedFn
+        inst.lastmainshield = 0
+        inst.components.cooldown:StartCharging(TUNING.ALICE_SHADOW_SHIELD_COOLDOWN)
+    end
+    -- 暗影护盾恢复逻辑...
+    if data.item.prefab == "dread_shield" and data.item.restoretask == nil then
+        data.item.restoretask = data.item:DoPeriodicTask(1, function()
+            local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
+            if owner and owner.components.sanity then
+                local old = data.item.components.finiteuses:GetUses()
+                local max = data.item.components.finiteuses.total
+                local sanity = owner.components.sanity:GetPercent()
+                local new = old + max / (900 + 600 * sanity)
+                new = math.min(new, max)
+                data.item.components.finiteuses:SetUses(new)
             end
-
-            if data.item.restoretask == nil then
-                data.item.restoretask = data.item:DoPeriodicTask(1,function()
-                    --local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
-                    if owner and owner.components.sanity then
-                        local old = data.item.components.finiteuses:GetUses()
-                        local max = data.item.components.finiteuses.total
-                        local sanity = owner.components.sanity:GetPercent()
-                        local new = old + max / (900 + 600 * sanity)
-                        new = math.min(new, max)
-                        --print(old, new)
-                        data.item.components.finiteuses:SetUses(new)
-                    end
-                end)
-            end
-        end
+        end)
     end
 end
 
 local function OnShieldUnloaded(inst, data)
+    if not data or not data.item then
+        return
+    end
+    
+    -- 只处理从最后一个插板槽移除的物品
+    local num_slots = inst.components.container:GetNumSlots()
+    local slot_index = inst.components.container:GetItemSlot(data.item)
+    if slot_index ~= num_slots then
+        return
+    end
+    
+    -- 只处理带有插板标签的物品
+    if not data.item:HasTag("alice_shield") then
+        return
+    end
+    
+    -- 原有的插板卸载逻辑
     if data.item and data.item.restoretask ~= nil then
         data.item.restoretask:Cancel()
         data.item.restoretask = nil
@@ -312,7 +339,6 @@ local function OnShieldUnloaded(inst, data)
     inst.shield = false
 
     local prev_prefab = inst.shield_prefab
-    -- 推送事件给玩家
     if prev_prefab then
         local owner = inst.components.inventoryitem and inst.components.inventoryitem.owner or nil
         if owner then
@@ -323,14 +349,12 @@ local function OnShieldUnloaded(inst, data)
         end
     end
     
-    
     inst.components.cooldown.onchargedfn = nil
     if inst.task ~= nil then
         inst.task:Cancel()
         inst.task = nil
         inst.components.resistance:SetOnResistDamageFn(OnResistDamage)
     end
-
     for i, v in ipairs(RESISTANCES) do
         inst.components.resistance:RemoveResistance(v)
     end
@@ -365,6 +389,7 @@ local function common()
     inst:AddTag("waterproofer")
     inst:AddTag("alice_coat")
     inst:AddTag("hide_percentage")
+    inst:AddTag("nosteal")
 
     inst.foleysound = "dontstarve/movement/foley/bone"
 
@@ -407,7 +432,7 @@ local function common()
 
     inst:AddComponent("container")
 	inst.components.container.canbeopened = true
-    inst.components.container.stay_open_on_hide = true
+    --inst.components.container.stay_open_on_hide = true
     inst.shield_prefab = nil
     inst:ListenForEvent("itemget", OnShieldLoaded)
     inst:ListenForEvent("itemlose", OnShieldUnloaded)
@@ -441,6 +466,9 @@ local function battle()
 
     inst.components.container:WidgetSetup("alice_battlecoat")
 
+    inst:AddComponent("preserver")
+    inst.components.preserver:SetPerishRateMultiplier(TUNING.PERISH_SALTBOX_MULT)
+
     return inst
 end
 
@@ -467,6 +495,9 @@ local function maid()
     inst.components.inventoryitem.imagename = "alice_maidcoat"
 
     inst.components.container:WidgetSetup("alice_maidcoat")
+
+    inst:AddComponent("preserver")
+    inst.components.preserver:SetPerishRateMultiplier(TUNING.FISH_BOX_PRESERVER_RATE)
 
     return inst
 end

@@ -128,6 +128,8 @@ STRINGS.RECIPE_DESC.ALICE_ROBOT = "一个可爱的助手"
 STRINGS.CHARACTERS.ALICE.DESCRIBE.ALICE_ROBOT = "这是爱丽丝的小助手，负责维护战场整洁！"
 STRINGS.CHARACTERS.GENERIC.DESCRIBE.ALICE_ROBOT = "它看起来有点像爱丽丝，充满科技感。"
 
+--烂电线alice_trinket_6 废料alice_wagpunk_bits 启迪碎片alice_alterguardianhatshard文本需要添加
+
 STRINGS.ALICE_REMOTE = {
     LIGHT = "照明",
     MUSIC = "播放音乐",
@@ -190,6 +192,9 @@ STRINGS.ACTIONS.LIGHTSWORD = {
     UI_TITLE = "光之剑 信息面板",
     NEED_MODE = "需要模块才能升级",
     MAX_LEVEL = "已经到最高等级了",
+    CHARGE_READY = "邦邦卡邦！超新星充能完毕，随时发射！",
+    OVERHEAT = "激光连续射击，散热片冒烟啦！",
+    OVERHEAT_COOLED = "散热完成！激光可以再开火！",
 }
 
 STRINGS.LIGHTSWORD_MODE = {

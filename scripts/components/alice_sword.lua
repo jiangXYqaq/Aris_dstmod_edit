@@ -20,8 +20,6 @@ local Sword = Class(function(self, inst)
     
     self.level = {0, -1, 0, -1}
     self.maxlevel = {5, 5, 5, 1}
-
-    self.uses = {1, 2, 5, 0.1}
     
     self.lastmode = nil
 
@@ -89,7 +87,7 @@ function Sword:GetDamage(hit_type)
     local damage = 0 
     --1~连射模式 2~能量炮弹 3~EX技能 4~高能激光刀刃
     if mode == 1 then --此处更改了成长后的伤害，因此升级后提升更大，约200%
-        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1 + level * 0.7)
+        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (2.0 + level * 1.5)
     elseif mode == 2 then
         -- 更清晰的命中类型区分
         if hit_type == "direct" then
@@ -100,7 +98,7 @@ function Sword:GetDamage(hit_type)
             damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (1.5 + level * 2.0)
         end
     elseif mode == 3 then
-        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (15 + level * 10)
+        damage = TUNING.ALICE_LIGHTSWORD_DAMAGE * (25 + level * 15)
     elseif mode == 4 then
         damage = TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_BASE + TUNING.ALICE_LIGHTSWORD_MODE4_PLANAR_DAMAGE_PER_LEVEL * level
     end
@@ -145,23 +143,36 @@ end
 
 function Sword:DoItemUse()
     local item = self:Sword_GetCurrentItem()
-    local use = self.uses[self.mode]
-    local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
+    -- 从 TUNING 读取当前模式的消耗值
+    local mode_uses = {
+        [1] = TUNING.ALICE_LIGHTSWORD_USE_MODE1,
+        [2] = TUNING.ALICE_LIGHTSWORD_USE_MODE2,
+        [3] = TUNING.ALICE_LIGHTSWORD_USE_MODE3,
+        [4] = TUNING.ALICE_LIGHTSWORD_USE_MODE4,
+    }
+    local use = mode_uses[self.mode] or 1
 
-    if item and item.components.finiteuses then
-        item.components.finiteuses:Use(use)
+    if item and item.components.fueled then  -- 改为 fueled
+        item.components.fueled:DoDelta(-use)
     end
 
+    local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
     if owner and owner.weaponui then
-		owner.weaponui:Update()
-	end
+        owner.weaponui:Update()
+    end
 end
 
-function Sword:Checkfiniteuses()
+function Sword:CheckFuelUses()
     local item = self:Sword_GetCurrentItem()
-    local min = self.uses[self.mode] / 100
-    if item and item.components.finiteuses then
-        if item.components.finiteuses:GetPercent() > 0 then
+    local mode_uses = {
+        [1] = TUNING.ALICE_LIGHTSWORD_USE_MODE1,
+        [2] = TUNING.ALICE_LIGHTSWORD_USE_MODE2,
+        [3] = TUNING.ALICE_LIGHTSWORD_USE_MODE3,
+        [4] = TUNING.ALICE_LIGHTSWORD_USE_MODE4,
+    }
+    local min = (mode_uses[self.mode] or 1) / 100
+    if item and item.components.fueled then
+        if item.components.fueled:GetPercent() > 0 then
             return true
         else
             local owner = self.inst.components.inventoryitem and self.inst.components.inventoryitem.owner
@@ -184,7 +195,7 @@ end
 
 function Sword:LaunchLaser(user, pos)
     self.shotmode = self:GetCurrentMode()
-    if self:Checkfiniteuses() then
+    if self:CheckFuelUses() then
         local rotation = user.Transform:GetRotation()
         local px, py, pz = user.Transform:GetWorldPosition()
         local offset = Vector3(1.5, 0.5, 0)
@@ -206,7 +217,7 @@ end
 
 function Sword:Launch(user, pos)
     self.shotmode = self:GetCurrentMode()
-    if pos and self:Checkfiniteuses() then
+    if pos and self:CheckFuelUses() then
         local target = CreateTargetInPos(pos)
         self.inst.components.weapon:LaunchProjectile(user, target)
         self:DoItemUse()

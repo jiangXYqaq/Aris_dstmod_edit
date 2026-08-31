@@ -542,6 +542,27 @@ local function music()
 	return inst
 end
 
+-- 计算需要多少电荷才能充满
+local function CalcChargeMult(inst, battery)
+    local pct = inst.components.fueled:GetPercent()
+    local needed_pct = 1 - pct
+    -- 每个电荷恢复的百分比
+    local add_percent = TUNING.ALICE_REMOTE_FUEL_ADD / TUNING.ALICE_REMOTE_FUEL
+    local needed_charge = needed_pct / add_percent
+    return needed_charge
+end
+
+-- 接收电荷并充电
+local function OnBatteryUsed(inst, battery, mult)
+    if mult <= 0 or inst.components.fueled:IsFull() then
+        return false, "CHARGE_FULL"
+    end
+    local add_percent = TUNING.ALICE_REMOTE_FUEL_ADD / TUNING.ALICE_REMOTE_FUEL
+    local new_pct = math.min(1, inst.components.fueled:GetPercent() + mult * add_percent)
+    inst.components.fueled:SetPercent(new_pct)
+    return true
+end
+
 local function fn()
 	local inst = CreateEntity()
 
@@ -557,6 +578,7 @@ local function fn()
 	inst:AddTag("engineeringbatterypowered")
 	inst:AddTag("alice_remote")
     inst:AddTag('trader')
+	inst:AddTag("nosteal")
 
 	inst.AnimState:SetBank("alice_remote")
 	inst.AnimState:SetBuild("alice_remote")
@@ -625,6 +647,12 @@ local function fn()
 	inst.components.fueled:InitializeFuelLevel(TUNING.ALICE_REMOTE_FUEL)
 	inst.components.fueled:SetDepletedFn(OnDepleted)
 	inst.components.fueled:SetTakeFuelFn(OnTakeFuel)
+
+	-- 添加用电器组件
+    inst:AddComponent("batteryuser")
+	inst.components.batteryuser:SetChargeMultFn(CalcChargeMult)
+	inst.components.batteryuser:SetOnBatteryUsedFn(OnBatteryUsed)
+	inst.components.batteryuser:SetAllowPartialCharge(true)
 
     inst:AddComponent("leader")
 

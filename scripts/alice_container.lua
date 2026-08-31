@@ -22,72 +22,62 @@ params.alice_lightsword = {
     end
 }
 
+-- 基础护甲（战斗外套）：2×4 = 8 格，最后一格为插板槽
 params.alice_battlecoat = {
     widget = {
-        slotpos =
-        {
-            Vector3(0,   32 + 4,  0),
-        },
-        animbank = "ui_cookpot_1x2",
-        animbuild = "ui_cookpot_1x2",
-        pos = Vector3(50, 15, 0),
+        slotpos = {},
+        animbank = "ui_backpack_2x4",
+        animbuild = "ui_backpack_2x4",
+        pos = Vector3(-5, -80, 0),
     },
-    acceptsstacks = false,
+    issidewidget = true,
+    type = "pack",
+    openlimit = 1,
     usespecificslotsforitems = true,
-    type = "hand_inv",
-    excludefromcrafting = true,
     itemtestfn = function(inst, item, slot)
-        return item:HasTag("alice_shield")
-    end
-}
-
-params.alice_maidcoat = params.alice_battlecoat
-
-params.wx78module_alc_charge = {
-    widget = {
-        slotpos =
-        {
-            Vector3(0,   32 + 4,  0),
-            Vector3(0, -(32 + 4), 0),
-        },
-        animbank = "ui_cookpot_1x2",
-        animbuild = "ui_cookpot_1x2",
-        pos = Vector3(0, 160, 0),
-        buttoninfo =
-        {
-            text = "充电",
-            position = Vector3(0, -93, 0),
-        },
-    },
-    acceptsstacks = false,
-    usespecificslotsforitems = true,
-    type = "chest",
-    excludefromcrafting = true,
-    itemtestfn = function(inst, item, slot)
-        return item:HasTag("alice_battery") or item:HasTag("alice_remote") 
-    end
-}
-
-function params.wx78module_alc_charge.widget.buttoninfo.fn(inst, doer)
-    if inst.chargetask ~= nil then
-        return
-    end
-
-    if inst.components.container ~= nil then
-        inst.chargetest = true
-        local action = BufferedAction(doer, inst, ACTIONS.APPLYMODULE, inst)
-        doer.components.locomotor:PushAction(action)
-        inst.wx = doer
-        if inst.components.container ~= nil then
-            inst.components.container:Close()
+        local num_slots = 8
+        if slot == num_slots then
+            return item:HasTag("alice_shield")
         end
-    elseif inst.replica.container ~= nil and not inst.replica.container:IsBusy() then
-        SendRPCToServer(RPC.DoWidgetButtonAction, ACTIONS.APPLYMODULE.code, inst, ACTIONS.APPLYMODULE.mod_name)
-    end
+        if item:HasTag("alice_shield") then
+            return false
+        end
+        return true
+    end,
+}
+-- 填充 slotpos（2列4行）
+for y = 0, 3 do
+    table.insert(params.alice_battlecoat.widget.slotpos, Vector3(-162, -75 * y + 114, 0))
+    table.insert(params.alice_battlecoat.widget.slotpos, Vector3(-162 + 75, -75 * y + 114, 0))
 end
 
-function params.wx78module_alc_charge.widget.buttoninfo.validfn(inst)
-    return inst.replica.container ~= nil and not inst.replica.container:IsEmpty() and not inst.charging:value()
+-- 进阶护甲（女仆外套）：2×7 = 14 格，最后一格为插板槽
+params.alice_maidcoat = {
+    widget = {
+        slotpos = {},
+        animbank = "ui_krampusbag_2x8",
+        animbuild = "ui_krampusbag_2x8",
+        pos = Vector3(-5, -130, 0),
+    },
+    issidewidget = true,
+    type = "pack",
+    openlimit = 1,
+    usespecificslotsforitems = true,
+    itemtestfn = function(inst, item, slot)
+        local num_slots = 14
+        if slot == num_slots then
+            return item:HasTag("alice_shield")
+        end
+        if item:HasTag("alice_shield") then
+            return false
+        end
+        return true
+    end,
+}
+-- 填充 slotpos（2列7行）
+for y = 0, 6 do
+    table.insert(params.alice_maidcoat.widget.slotpos, Vector3(-162, -75 * y + 240, 0))
+    table.insert(params.alice_maidcoat.widget.slotpos, Vector3(-162 + 75, -75 * y + 240, 0))
 end
     
 params.alice_robot =
