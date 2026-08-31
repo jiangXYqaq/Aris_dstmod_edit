@@ -18,7 +18,7 @@ local Sword = Class(function(self, inst)
 	self.changefn = nil
     self.container = inst.components.container
     
-    self.level = {0, -1, -1, -1}
+    self.level = {0, -1, 0, -1}
     self.maxlevel = {5, 5, 5, 1}
     
     self.lastmode = nil

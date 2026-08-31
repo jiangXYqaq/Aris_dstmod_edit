@@ -25,7 +25,8 @@ local RESISTANCES =
 }
 
 local function OnTakeDamage(inst, amount)
-    local item = inst.components.container:GetItemInSlot(1)
+    local num_slots = inst.components.container:GetNumSlots()
+    local item = inst.components.container:GetItemInSlot(num_slots)
     if item and item.components and item.components.finiteuses then
         item.components.finiteuses:Use(amount)
     end
@@ -198,6 +199,9 @@ local function onequip(inst, owner)
 end
 
 local function onunequip_maid(inst, owner)
+    if inst.components.container ~= nil then
+        inst.components.container:Close()
+    end
 	-- 新增：卸下时停止检测并重置
     if inst.UpdateInsulationTask ~= nil then
         inst.UpdateInsulationTask:Cancel()
@@ -222,6 +226,10 @@ local function onunequip_maid(inst, owner)
 end
 
 local function onequip_maid(inst, owner)
+    if inst.components.container ~= nil then
+        inst.components.container:Open(owner)
+    end
+
 	-- 新增：装备时激活温度检测
     if inst.UpdateInsulationTask == nil then
         inst.UpdateInsulationTask = inst:DoPeriodicTask(2, function()
@@ -424,7 +432,7 @@ local function common()
 
     inst:AddComponent("container")
 	inst.components.container.canbeopened = true
-    inst.components.container.stay_open_on_hide = true
+    --inst.components.container.stay_open_on_hide = true
     inst.shield_prefab = nil
     inst:ListenForEvent("itemget", OnShieldLoaded)
     inst:ListenForEvent("itemlose", OnShieldUnloaded)
